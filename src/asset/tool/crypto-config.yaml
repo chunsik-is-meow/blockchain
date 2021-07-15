@@ -1,0 +1,70 @@
+OrdererOrgs:
+  - Name: Orderer
+    Domain: pusan.ac.kr
+    Template:
+      Count: 3
+PeerOrgs:
+  - Name: management
+    Domain: management.pusan.ac.kr
+    EnableNodeOUs: true
+    CA:
+      Hostname: ca
+      Country: KR
+      OrganizationalUnit: management
+    Specs:
+      - Hostname: peer0
+        CommonName: peer0.management.pusan.ac.kr
+        SANS:
+          - peer0.management.pusan.ac.kr
+          - localhost
+          - 127.0.0.1
+    Users:
+      Count: 1
+  - Name: verification-01
+    Domain: verification-01.pusan.ac.kr
+    EnableNodeOUs: true
+    CA:
+      Hostname: ca
+      Country: KR
+      OrganizationalUnit: verification-01
+    Specs:
+      - Hostname: peer0
+        CommonName: peer0.verification-01.pusan.ac.kr
+        SANS:
+          - peer0.verification-01.pusan.ac.kr
+          - localhost
+          - 127.0.0.1
+    Users:
+      Count: 1
+  - Name: verification-02
+    Domain: verification-02.pusan.ac.kr
+    EnableNodeOUs: true
+    CA:
+      Hostname: ca
+      Country: KR
+      OrganizationalUnit: verification-02
+    Specs:
+      - Hostname: peer0
+        CommonName: peer0.verification-02.pusan.ac.kr
+        SANS:
+          - peer0.verification-02.pusan.ac.kr
+          - localhost
+          - 127.0.0.1
+    Users:
+      Count: 1
+  - Name: trader
+    Domain: trader.pusan.ac.kr
+    EnableNodeOUs: true
+    CA:
+      Hostname: ca
+      Country: KR
+      OrganizationalUnit: trader
+    Specs:
+      - Hostname: peer0
+        CommonName: peer0.trader.pusan.ac.kr
+        SANS:
+          - peer0.trader.pusan.ac.kr
+          - localhost
+          - 127.0.0.1
+    Users:
+      Count: 1

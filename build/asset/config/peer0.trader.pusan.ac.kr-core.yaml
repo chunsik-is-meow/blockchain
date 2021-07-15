@@ -1,0 +1,206 @@
+peer:
+  id: peer0.trader.pusan.ac.kr
+  networkId: pnu
+  listenAddress: 0.0.0.0:7051
+  chaincodeAddress: peer0.trader.pusan.ac.kr:7052
+  chaincodeListenAddress: 0.0.0.0:7052
+  address: peer0.trader.pusan.ac.kr:7051
+  addressAutoDetect: true
+  keepalive:
+    interval: 7200s
+    timeout: 20s
+    minInterval: 60s
+    client:
+      interval: 60s
+      timeout: 20s
+    deliveryClient:
+      interval: 60s
+      timeout: 20s
+  gossip:
+    bootstrap: peer0.trader.pusan.ac.kr:7051
+    useLeaderElection: true
+    orgLeader: false
+    membershipTrackerInterval: 5s
+    endpoint: peer0.trader.pusan.ac.kr:7051
+    maxBlockCountToStore: 20
+    maxPropagationBurstLatency: 10ms
+    maxPropagationBurstSize: 10
+    propagateIterations: 1
+    propagatePeerNum: 3
+    pullInterval: 4s
+    pullPeerNum: 3
+    requestStateInfoInterval: 4s
+    publishStateInfoInterval: 4s
+    publishCertPeriod: 10s
+    skipBlockVerification: false
+    dialTimeout: 3s
+    connTimeout: 2s
+    recvBuffSize: 20
+    sendBuffSize: 200
+    digestWaitTime: 1s
+    requestWaitTime: 1500ms
+    responseWaitTime: 2s
+    aliveTimeInterval: 5s
+    aliveExpirationTimeout: 25s
+    reconnectInterval: 25s
+    maxConnectionAttempts: 120
+    msgExpirationFactor: 20
+    externalEndpoint: peer0.trader.pusan.ac.kr:7051
+    election:
+      startupGracePeriod: 15s
+      membershipSampleInterval: 1s
+      leaderAliveThreshold: 10s
+      leaderElectionDuration: 5s
+    pvtData:
+      pullRetryThreshold: 60s
+      transientstoreMaxBlockRetention: 1000
+      pushAckTimeout: 3s
+      btlPullMargin: 10
+      reconcileBatchSize: 10
+      reconcileSleepInterval: 1m
+      reconciliationEnabled: true
+      skipPullingInvalidTransactionsDuringCommit: false
+      implicitCollectionDisseminationPolicy:
+        requiredPeerCount: 0
+        maxPeerCount: 1
+    state:
+      enabled: true
+      checkInterval: 10s
+      responseTimeout: 3s
+      batchSize: 10
+      blockBufferSize: 20
+      maxRetries: 3
+  tls:
+    enabled: true
+    clientAuthRequired: false
+    cert:
+      file: /etc/hyperledger/fabric/tls/server.crt
+    key:
+      file: /etc/hyperledger/fabric/tls/server.key
+    rootcert:
+      file: /etc/hyperledger/fabric/tls/ca.crt
+    clientRootCAs:
+      files:
+        - /etc/hyperledger/fabric/tls/ca.crt
+  authentication:
+    timewindow: 15m
+  fileSystemPath: /var/hyperledger/production
+  BCCSP:
+    Default: SW
+    SW:
+      Hash: SHA2
+      Security: 256
+  localMspType: bccsp
+  localMspId: traderMSP
+  mspConfigPath: /etc/hyperledger/fabric/msp
+  client:
+    connTimeout: 3s
+  deliveryClient:
+    reconnectTotalTimeThreshold: 3600s
+    connTimeout: 3s
+    reConnectBackoffThreshold: 3600s
+  profile:
+    enabled: false
+    listenAddress: 0.0.0.0:6060
+  handlers:
+    authFilters:
+      - name: DefaultAuth
+      - name: ExpirationCheck
+    decorators:
+      - name: DefaultDecorator
+    endorsers:
+      escc:
+        name: DefaultEndorsement
+    validators:
+      vscc:
+        name: DefaultValidation
+  discovery:
+    enabled: true
+    authCacheEnabled: true
+    authCacheMaxSize: 1000
+    authCachePurgeRetentionRatio: 0.75
+    orgMembersAllowedAccess: false
+  limits:
+    concurrency:
+      endorserService: 2500
+      deliverService: 2500
+vm:
+  endpoint: unix:///var/run/docker.sock
+  docker:
+    tls:
+      enabled: false
+      ca:
+        file: docker/ca.crt
+      cert:
+        file: docker/tls.crt
+      key:
+        file: docker/tls.key
+    attachStdout: false
+    hostConfig:
+      NetworkMode: pnu
+      LogConfig:
+        Type: json-file
+        Config:
+          max-size: 50m
+          max-file: '5'
+      Memory: 2147483648
+chaincode:
+  id: {}
+  builder: docker.io/hyperledger/fabric-ccenv:2.2.2
+  pull: false
+  golang:
+    runtime: docker.io/hyperledger/fabric-baseos:2.2.2
+    dynamicLink: false
+  java:
+    runtime: docker.io/hyperledger/fabric-javaenv:2.2.2
+  node:
+    runtime: docker.io/hyperledger/fabric-nodeenv:2.2.2
+  installTimeout: 300s
+  startupTimeout: 300s
+  executeTimeout: 60s
+  mode: net
+  keepalive: 0
+  system:
+    _lifecycle: enable
+    cscc: enable
+    lscc: enable
+    escc: enable
+    vscc: enable
+    qscc: enable
+  logging:
+    level: debug
+    shim: warning
+    format: >-
+      %{color}%{time:2006-01-02 15:04:05.000 MST} [%{module}] %{shortfunc} ->
+      %{level:.4s} %{id:03x}%{color:reset} %{message}
+ledger:
+  state:
+    stateDatabase: CouchDB
+    totalQueryLimit: 100000
+    couchDBConfig:
+      couchDBAddress: couchdb.peer0.trader.pusan.ac.kr:5984
+      username: admin
+      password: adminpw
+      maxRetries: 3
+      maxRetriesOnStartup: 10
+      requestTimeout: 35s
+      internalQueryLimit: 1000
+      maxBatchUpdateSize: 1000
+      warmIndexesAfterNBlocks: 1
+      createGlobalChangesDB: false
+      cacheSize: 64
+  history:
+    enableHistoryDatabase: true
+  pvtDataStore:
+    collElgProcMaxDbBatchSize: 5000
+    collElgProcDbBatchesInterval: 1000
+    deprioritizedDataReconcilerInterval: 60m
+  snapshots:
+    rootDir: /var/hyperledger/production/snapshots
+operations:
+  listenAddress: 0.0.0.0:9443
+  tls:
+    enabled: false
+    clientAuthRequired: false
+metrics:
+  provider: prometheus

@@ -1,0 +1,66 @@
+version: '3'
+networks:
+  default:
+    external:
+      name: pnu
+services:
+  peer0.management.pusan.ac.kr:
+    restart: always
+    container_name: peer0.management.pusan.ac.kr
+    image: docker.io/hyperledger/fabric-peer:2.2.2
+    environment:
+      - FABRIC_CFG_PATH:/etc/hyperledger/fabric
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    working_dir: /etc/hyperledger/fabric
+    command: peer node start
+    volumes:
+      - >-
+        ../config/peer0.management.pusan.ac.kr-core.yaml:/etc/hyperledger/fabric/core.yaml
+      - >-
+        ../artifacts/crypto-config/peerOrganizations/management.pusan.ac.kr/peers/peer0.management.pusan.ac.kr/msp:/etc/hyperledger/fabric/msp
+      - >-
+        ../artifacts/crypto-config/peerOrganizations/management.pusan.ac.kr/peers/peer0.management.pusan.ac.kr/tls:/etc/hyperledger/fabric/tls
+      - ../artifacts/block:/etc/hyperledger/fabric/block
+      - ../artifacts/tx:/etc/hyperledger/fabric/tx
+      - /var/run/docker.sock:/host/var/run/docker.sock
+    depends_on:
+      - couchdb.peer0.management.pusan.ac.kr
+      - cli.peer0.management.pusan.ac.kr
+  couchdb.peer0.management.pusan.ac.kr:
+    restart: always
+    container_name: couchdb.peer0.management.pusan.ac.kr
+    image: docker.io/hyperledger/fabric-couchdb:0.4.22
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=adminpw
+  cli.peer0.management.pusan.ac.kr:
+    restart: always
+    container_name: cli.peer0.management.pusan.ac.kr
+    image: docker.io/hyperledger/fabric-tools:2.2.2
+    environment:
+      - FABRIC_CFG_PATH:/etc/hyperledger/fabric
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_LEDGER_STATE_STATEDATABASE=goleveldb
+    working_dir: /etc/hyperledger/fabric
+    command: sh -c 'peer node start'
+    volumes:
+      - >-
+        ../config/peer0.management.pusan.ac.kr-core.yaml:/etc/hyperledger/fabric/core.yaml
+      - >-
+        ../artifacts/crypto-config/peerOrganizations/management.pusan.ac.kr/users/Admin@management.pusan.ac.kr/msp:/etc/hyperledger/fabric/msp
+      - >-
+        ../artifacts/crypto-config/peerOrganizations/management.pusan.ac.kr/peers/peer0.management.pusan.ac.kr/tls:/etc/hyperledger/fabric/tls
+      - >-
+        ../artifacts/crypto-config/ordererOrganizations/pusan.ac.kr/tlsca/tlsca.pusan.ac.kr-cert.pem:/etc/hyperledger/fabric/orderer-tls/tlsca.pusan.ac.kr-cert.pem
+      - ../artifacts/block:/etc/hyperledger/fabric/block
+      - ../artifacts/tx:/etc/hyperledger/fabric/tx
+      - ../chaincodes:/etc/hyperledger/fabric/chaincodes
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - >-
+        ../artifacts/crypto-config/peerOrganizations/management.pusan.ac.kr/tlsca/tlsca.management.pusan.ac.kr-cert.pem:/etc/hyperledger/fabric/management.pusan.ac.kr-tls/tlsca.management.pusan.ac.kr-cert.pem
+      - >-
+        ../artifacts/crypto-config/peerOrganizations/verification-01.pusan.ac.kr/tlsca/tlsca.verification-01.pusan.ac.kr-cert.pem:/etc/hyperledger/fabric/verification-01.pusan.ac.kr-tls/tlsca.verification-01.pusan.ac.kr-cert.pem
+      - >-
+        ../artifacts/crypto-config/peerOrganizations/verification-02.pusan.ac.kr/tlsca/tlsca.verification-02.pusan.ac.kr-cert.pem:/etc/hyperledger/fabric/verification-02.pusan.ac.kr-tls/tlsca.verification-02.pusan.ac.kr-cert.pem
+      - >-
+        ../artifacts/crypto-config/peerOrganizations/trader.pusan.ac.kr/tlsca/tlsca.trader.pusan.ac.kr-cert.pem:/etc/hyperledger/fabric/trader.pusan.ac.kr-tls/tlsca.trader.pusan.ac.kr-cert.pem

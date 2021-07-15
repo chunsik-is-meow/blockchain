@@ -1,0 +1,21 @@
+{
+  "license": "Apach-2.0",
+  "network-configs": {
+    "management.pusan.ac.kr": {
+      "name": "management.pusan.ac.kr",
+      "profile": "./connection-profile/management.pusan.ac.kr-network.json"
+    },
+    "verification-01.pusan.ac.kr": {
+      "name": "verification-01.pusan.ac.kr",
+      "profile": "./connection-profile/verification-01.pusan.ac.kr-network.json"
+    },
+    "verification-02.pusan.ac.kr": {
+      "name": "verification-02.pusan.ac.kr",
+      "profile": "./connection-profile/verification-02.pusan.ac.kr-network.json"
+    },
+    "trader.pusan.ac.kr": {
+      "name": "trader.pusan.ac.kr",
+      "profile": "./connection-profile/trader.pusan.ac.kr-network.json"
+    }
+  }
+}

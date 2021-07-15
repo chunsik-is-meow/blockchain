@@ -1,0 +1,113 @@
+Version: 1.4.9
+CFG:
+  Identities:
+    PasswordAttempts: 10
+    AllowRemove: true
+  Affiliations:
+    AllowRemove: true
+CA:
+  Name: ca.management.pusan.ac.kr
+  KeyFile: /etc/hyperledger/fabric-ca-server-crypto/priv_sk
+  CertFile: /etc/hyperledger/fabric-ca-server-crypto/ca.management.pusan.ac.kr-cert.pem
+Signing:
+  Default:
+    Usage:
+      - digital signature
+    Expiry: 8760h
+  Profiles:
+    CA:
+      Usage:
+        - cert sign
+        - crl sign
+      Expiry: 43800h
+      CAConstraint:
+        isCA: true
+        MaxPathLen: 0
+    TLS:
+      Usage:
+        - signing
+        - key encipherment
+        - server auth
+        - client auth
+        - key agreement
+      Expiry: 8760h
+CSR:
+  CN: ca.management.pusan.ac.kr
+  Names:
+    - C: KR
+      O: ca.management.pusan.ac.kr
+  Hosts:
+    - localhost
+    - ca.management.pusan.ac.kr
+    - management.pusan.ac.kr
+  KeyRequest:
+    Algo: ecdsa
+    Size: 256
+  CA:
+    Expiry: 131400h
+Registry:
+  MaxEnrollments: -1
+  Identities:
+    - Name: admin
+      Pass: adminpw
+      Type: client
+      Affiliation: ''
+      Attrs:
+        hf.Registrar.Roles: '*'
+        hf.Registrar.DelegateRoles: '*'
+        hf.Revoker: true
+        hf.IntermediateCA: true
+        hf.GenCRL: true
+        hf.Registrar.Attributes: '*'
+        hf.AffiliationMgr: true
+Affiliations:
+  management.pusan.ac.kr:
+    - admin
+    - user
+    - auth
+LDAP:
+  Enabled: false
+  URL: ldap://<adminDN>:<adminPassword>@<host>:<port>/<base>
+  Attribute:
+    Names:
+      - uid
+      - member
+DB:
+  Type: sqlite3
+  DataSource: fabric-ca-server.db
+  TLS:
+    Enabled: false
+BCCSP:
+  Default: SW
+  SW:
+    Hash: SHA2
+    Security: 256
+    FileKeyStore:
+      KeyStore: msp/keystore
+CRL:
+  Expiry: 24h
+TLS:
+  Enabled: true
+  CertFile: /etc/hyperledger/fabric-ca-server-crypto/ca.management.pusan.ac.kr-cert.pem
+  KeyFile: /etc/hyperledger/fabric-ca-server-crypto/priv_sk
+Port: 7054
+CORS:
+  Enabled: false
+  Origins:
+    - '*'
+Debug: false
+CRLSizeLimit: 512000
+Operations:
+  ListenAddress: 127.0.0.1:9443
+  TLS:
+    Enabled: false
+    ClientAuthRequired: false
+    ClientRootCAs:
+      Files: []
+Metrics:
+  Provider: disabled
+  Statsd:
+    Network: udp
+    Address: 127.0.0.1:8125
+    WriteInterval: 10s
+    Prefix: server
