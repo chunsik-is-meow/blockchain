@@ -4,7 +4,32 @@
     "x-type": "hlfv2",
     "description": "pnu project",
     "channels": {
-      "dna": {
+      "data": {
+        "orderers": [
+          "orderer0.pusan.ac.kr",
+          "orderer1.pusan.ac.kr",
+          "orderer2.pusan.ac.kr"
+        ],
+        "peers": [
+          "peer0.management.pusan.ac.kr",
+          "peer0.verification1.pusan.ac.kr",
+          "peer0.verification2.pusan.ac.kr",
+          "peer0.trader.pusan.ac.kr"
+        ]
+      },
+      "ai-model": {
+        "orderers": [
+          "orderer0.pusan.ac.kr",
+          "orderer1.pusan.ac.kr",
+          "orderer2.pusan.ac.kr"
+        ],
+        "peers": [
+          "peer0.management.pusan.ac.kr",
+          "peer0.verification1.pusan.ac.kr",
+          "peer0.verification2.pusan.ac.kr"
+        ]
+      },
+      "trade": {
         "orderers": [
           "orderer0.pusan.ac.kr",
           "orderer1.pusan.ac.kr",

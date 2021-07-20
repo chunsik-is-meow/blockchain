@@ -1,3 +1,5 @@
+source $shdir/scripts/const.sh
+
 function cecho {
     timestamp=`date --rfc-3339=seconds`
     RED="\033[1;31m"
@@ -24,11 +26,12 @@ function print_success {
 
 function command {
     cecho "INFO" "$1"
-    $1
+    $1 >&$bdir/log.txt
+    cat $bdir/log.txt
     res=$?
     if [ $res -ne 0 ]; then
       print_error
-      exit
+      # exit
     fi
     print_success
 }
