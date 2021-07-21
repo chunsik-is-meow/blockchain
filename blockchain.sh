@@ -152,6 +152,8 @@ function blockchain_chaincode {
         blockchain_chaincode_commit 'peer0.management.pusan.ac.kr' $CHANNEL $CHAINCODE_NAME $VERSION 1
         blockchain_chaincode_querycommitted 'peer0.management.pusan.ac.kr' $CHANNEL
     done
+
+    blockchain_chaincode_init
 }
 
 function blockchain_chaincode_package {
@@ -182,6 +184,7 @@ function blockchain_chaincode_approveformyorg {
     --version $version \
     --package-id $PACKAGE_ID \
     --sequence $sequence \
+    --init-required \
     $GLOBAL_FLAGS"
 }
 
@@ -199,6 +202,7 @@ function blockchain_chaincode_checkcommitreadiness {
     --name $chaincode \
     --version $version \
     --sequence $sequence \
+    --init-required \
     $GLOBAL_FLAGS"
 }
 
@@ -216,6 +220,7 @@ function blockchain_chaincode_commit {
     --name $chaincode \
     --version $version \
     --sequence $sequence \
+    --init-required \
     $GLOBAL_FLAGS"
 }
 
@@ -230,6 +235,90 @@ function blockchain_chaincode_querycommitted {
     $GLOBAL_FLAGS"
 }
 
+function blockchain_chaincode_init {
+    # peer=$1
+    # channel=$2
+    # chaincode=$3
+    peer=peer0.management.pusan.ac.kr
+    channel=trade
+    chaincode=trade
+    fcn_call='{"function":"InitLedger","Args":[]}'
+
+    command "docker exec -it \
+    cli.$peer \
+    peer chaincode invoke  \
+    --channelID $channel \
+    --name $chaincode \
+    --isInit \
+    -c $fcn_call \
+    $GLOBAL_FLAGS"
+}
+
+function blockchain_chaincode_invoke {
+    # peer=$1
+    # channel=$2
+    # chaincode=$3
+    peer=peer0.management.pusan.ac.kr
+    channel=trade
+    chaincode=trade
+
+    command "docker exec -it \
+    cli.$peer \
+    peer chaincode invoke  \
+    --channelID $channel \
+    --name $chaincode \
+    -c $1 \
+    $GLOBAL_FLAGS"
+}
+
+function blockchain_chaincode_query {
+    # peer=$1
+    # channel=$2
+    # chaincode=$3
+    peer=peer0.management.pusan.ac.kr
+    channel=trade
+    chaincode=trade
+
+    command "docker exec -it \
+    cli.$peer \
+    peer chaincode query  \
+    --channelID $channel \
+    --name $chaincode \
+    -c $1"
+}
+
+function blockchain_chaincode_upgrade {
+    CHANNEL=$1
+    CHAINCODE_NAME=$2
+    VERSION=$3
+    SEQUENCE=$4
+
+    blockchain_chaincode_package $CHAINCODE_NAME
+    for PEER_NAME in ${PEERS[@]}
+    do
+        if [[ $PEER_NAME == 'peer0.trader.pusan.ac.kr' && $CHAINCODE_NAME == 'ai-model' ]]
+        then
+            continue
+        fi
+        blockchain_chaincode_install $PEER_NAME $CHAINCODE_NAME
+    done
+
+    for PEER_NAME in ${PEERS[@]}
+    do
+        if [[ $PEER_NAME == 'peer0.trader.pusan.ac.kr' && $CHAINCODE_NAME == 'ai-model' ]]
+        then
+            continue
+        fi
+        blockchain_chaincode_approveformyorg $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
+        sleep 1s
+        blockchain_chaincode_checkcommitreadiness $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
+        blockchain_chaincode_commit 'peer0.management.pusan.ac.kr' $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
+        blockchain_chaincode_querycommitted 'peer0.management.pusan.ac.kr' $CHANNEL
+    done
+
+    blockchain_chaincode_init
+}
+
 function blockchain_chaincode_getpackageid {
     command "docker exec -it \
     cli.$1 \
@@ -238,9 +327,33 @@ function blockchain_chaincode_getpackageid {
     PACKAGE_ID=$(sed -n "/$2-$3/{s/^Package ID: //; s/, Label:.*$//; p;}" $bdir/log.txt)
 }
 
+function blockchain_test {
+    date=$(date '+%Y-%m-%d')
+
+    blockchain_chaincode_invoke '{"function":"Reward","Args":["hyoeun","99800000","'$date'"]}'
+    sleep 2s
+
+    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
+    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["admin"]}'
+
+    blockchain_chaincode_invoke '{"function":"Reward","Args":["hyoeun","200000","'$date'"]}'
+    sleep 2s
+
+    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
+    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["admin"]}'
+
+    blockchain_chaincode_invoke '{"function":"Reward","Args":["hyoeun","1","'$date'"]}'
+    sleep 2s
+
+    blockchain_chaincode_invoke '{"function":"Transfer","Args":["hyoeun","admin","30","'$date'"]}'
+
+    # TODO
+    # blockchain_chaincode_upgrade trade trade 2.0 2
+}
+
 function main {
     case $1 in
-        all | clean | build | up | down | channel | chaincode )
+        all | clean | build | up | down | channel | chaincode | test)
             cmd=blockchain_$1
             $cmd
             ;;
