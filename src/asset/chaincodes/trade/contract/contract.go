@@ -127,6 +127,48 @@ func (t *TradeChaincode) exec(ctx contractapi.TransactionContextInterface, from 
 	return nil
 }
 
+// BuyModel ...
+func (t *TradeChaincode) BuyModel(ctx contractapi.TransactionContextInterface, uid string, modelKey string, price uint32, timestamp string) error {
+	// GetCurrentMeow(uid) < price
+	// return error
+
+	// modelKey -> AI_uid_modelName_version(unique)
+	// seller = modelKey.split(_)[1]
+	// uid -> seller(get in modelKey) price's 90% ft
+
+	// modelKey -> ai-model channel query getModel(modelKey) ->
+	// Model {
+	// 	v orgs
+	// 	result
+	//  price
+	// }
+
+	// 1. model.price != price
+	// return error
+
+	// verificationOrgs = ["verification-01", "verification-02"]
+	// price 's 5% -> divide verificationOrgs.length -> ft ft
+	// uid -> admin 5% ft
+
+	// putstate -> B_~~~~
+	// timestamp
+
+	// return t.exec(ctx, from, to, amount, timestamp, "Transfer")
+
+	return fmt.Errorf("is not implemantation")
+}
+
+func makeBuyAIModelKey(uid string, model string) string {
+	var sb strings.Builder
+
+	sb.WriteString("B_")
+	sb.WriteString(uid)
+	sb.WriteString("_")
+	sb.WriteString(model)
+
+	return sb.String()
+}
+
 func makeMeowKey(uid string) string {
 	var sb strings.Builder
 
