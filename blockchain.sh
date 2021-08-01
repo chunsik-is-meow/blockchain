@@ -328,24 +328,25 @@ function blockchain_chaincode_getpackageid {
 }
 
 function blockchain_test {
-    date=$(date '+%Y-%m-%d')
-
-    blockchain_chaincode_invoke '{"function":"Reward","Args":["hyoeun","99800000","'$date'"]}'
-    sleep 2s
+    date=$(date '+%Y-%m-%d-%H-%M-%S')
 
     blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["admin"]}'
+    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
-    blockchain_chaincode_invoke '{"function":"Reward","Args":["hyoeun","200000","'$date'"]}'
+    # meow is lacking error
+    blockchain_chaincode_invoke '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
+
+    blockchain_chaincode_invoke '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
     sleep 2s
 
+    #price mismatch error
+    blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","300","'$date'"]}'
+
+    blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
+
+    sleep 2s
     blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["admin"]}'
-
-    blockchain_chaincode_invoke '{"function":"Reward","Args":["hyoeun","1","'$date'"]}'
-    sleep 2s
-
-    blockchain_chaincode_invoke '{"function":"Transfer","Args":["hyoeun","admin","30","'$date'"]}'
+    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
     # TODO
     # blockchain_chaincode_upgrade trade trade 2.0 2

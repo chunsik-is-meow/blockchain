@@ -15,15 +15,40 @@ type TradeChaincode struct {
 	contractapi.Contract
 }
 
-// Meow ...
-type Meow struct {
+// MeowType ...
+type MeowType struct {
 	Type   string `json:"type"`
 	Amount uint32 `json:"amount"`
 }
 
+// RewardType ...
+type RewardType struct {
+	Type   string `json:"type"`
+	To     string `json:"to"`
+	Amount uint32 `json:"amount"`
+}
+
+//BuyAIModelType ...
+type BuyAIModelType struct {
+	Timestamp string       `json:"timestamp"`
+	History   []RewardType `json:"history"`
+}
+
+// ModelResult ...
+type ModelResult struct {
+	F1Score string `json:"f1_score"`
+}
+
+// Model ...
+type Model struct {
+	VerificationOrgs []string    `json:"verification_orgs"`
+	Result           ModelResult `json:"model_result"`
+	Price            uint32      `json:"price"`
+}
+
 // InitLedger ...
 func (t *TradeChaincode) InitLedger(ctx contractapi.TransactionContextInterface) error {
-	initMeow := Meow{
+	initMeow := MeowType{
 		Type:   "GenesisMint",
 		Amount: GENESIS_MINT_AMOUNT,
 	}
@@ -33,7 +58,7 @@ func (t *TradeChaincode) InitLedger(ctx contractapi.TransactionContextInterface)
 		return fmt.Errorf("failed to json.Marshal(). %v", err)
 	}
 
-	ctx.GetStub().PutState(makeMeowKey("admin"), initMeowAsBytes)
+	ctx.GetStub().PutState(makeMeowKey("bank"), initMeowAsBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put to world state. %v", err)
 	}
@@ -42,8 +67,8 @@ func (t *TradeChaincode) InitLedger(ctx contractapi.TransactionContextInterface)
 }
 
 // GetCurrentMeow ...
-func (t *TradeChaincode) GetCurrentMeow(ctx contractapi.TransactionContextInterface, uid string) (*Meow, error) {
-	currentMeow := &Meow{}
+func (t *TradeChaincode) GetCurrentMeow(ctx contractapi.TransactionContextInterface, uid string) (*MeowType, error) {
+	currentMeow := &MeowType{}
 	currentMeowAsBytes, err := ctx.GetStub().GetState(makeMeowKey(uid))
 	if err != nil {
 		return nil, err
@@ -60,19 +85,10 @@ func (t *TradeChaincode) GetCurrentMeow(ctx contractapi.TransactionContextInterf
 	return currentMeow, nil
 }
 
-// Reward ...
-func (t *TradeChaincode) Reward(ctx contractapi.TransactionContextInterface, uid string, amount uint32, timestamp string) error {
-	return t.exec(ctx, "admin", uid, amount, timestamp, "Reward")
-}
-
 // Transfer ...
-func (t *TradeChaincode) Transfer(ctx contractapi.TransactionContextInterface, from string, to string, amount uint32, timestamp string) error {
-	return t.exec(ctx, from, to, amount, timestamp, "Transfer")
-}
-
-func (t *TradeChaincode) exec(ctx contractapi.TransactionContextInterface, from string, to string, amount uint32, timestamp string, meowType string) error {
+func (t *TradeChaincode) Transfer(ctx contractapi.TransactionContextInterface, from string, to string, amount uint32, timestamp string, meowType string) error {
 	// INSERT Transfer history
-	rewardMeow := Meow{
+	rewardMeow := MeowType{
 		Type:   meowType,
 		Amount: amount,
 	}
@@ -129,13 +145,16 @@ func (t *TradeChaincode) exec(ctx contractapi.TransactionContextInterface, from 
 
 // BuyModel ...
 func (t *TradeChaincode) BuyModel(ctx contractapi.TransactionContextInterface, uid string, modelKey string, price uint32, timestamp string) error {
-	// GetCurrentMeow(uid) < price
-	// return error
+	checkBuyAIModelAsBytes, err := ctx.GetStub().GetState(makeBuyAIModelKey(uid, modelKey))
+	if err != nil {
+		return fmt.Errorf("failed to get BuyAiModel. %v", err)
+	} else if checkBuyAIModelAsBytes != nil {
+		return fmt.Errorf("already buy model ...")
+	}
 
-	// modelKey -> AI_uid_modelName_version(unique)
-	// seller = modelKey.split(_)[1]
-	// uid -> seller(get in modelKey) price's 90% ft
-
+	// TODO
+	// GetModel from ai-model-channel
+	// check isNotExist Model Error
 	// modelKey -> ai-model channel query getModel(modelKey) ->
 	// Model {
 	// 	v orgs
@@ -143,19 +162,90 @@ func (t *TradeChaincode) BuyModel(ctx contractapi.TransactionContextInterface, u
 	//  price
 	// }
 
-	// 1. model.price != price
-	// return error
+	model := Model{
+		VerificationOrgs: []string{"verification-01"},
+		Result: ModelResult{
+			F1Score: "93.4%",
+		},
+		Price: 3000,
+	}
 
-	// verificationOrgs = ["verification-01", "verification-02"]
-	// price 's 5% -> divide verificationOrgs.length -> ft ft
-	// uid -> admin 5% ft
+	if price != model.Price {
+		return fmt.Errorf("the price mismatch in blockchain ..")
+	}
 
-	// putstate -> B_~~~~
-	// timestamp
+	currentMeow, err := t.GetCurrentMeow(ctx, uid)
+	if err != nil {
+		return fmt.Errorf("failed to get current meow. %v", err)
+	}
 
-	// return t.exec(ctx, from, to, amount, timestamp, "Transfer")
+	if currentMeow.Amount < price {
+		return fmt.Errorf("meow is lacking.. %v", err)
+	}
 
-	return fmt.Errorf("is not implemantation")
+	// NOTE
+	// modelKey -> AI_uid_modelName_version(unique)
+	seller := strings.Split(modelKey, "_")[1]
+	verificationOrgs := model.VerificationOrgs
+
+	if price%10 != 0 {
+		return fmt.Errorf("only available in units of 10 meow")
+	}
+
+	income := price * 8 / 10
+	verifyReward := price * 1 / 10
+	manageReward := price * 1 / 10
+
+	t.Transfer(ctx, uid, seller, income, timestamp, "income")
+	t.Transfer(ctx, uid, "admin", manageReward, timestamp, "reward")
+
+	buyAIModel := BuyAIModelType{
+		Timestamp: timestamp,
+		History: []RewardType{
+			{
+				Type:   "income",
+				To:     seller,
+				Amount: income,
+			},
+			{
+				Type:   "manageReward",
+				To:     "admin",
+				Amount: manageReward,
+			},
+		},
+	}
+
+	for _, org := range verificationOrgs {
+		// TODO
+		// divide verifyReward
+		t.Transfer(ctx, uid, org, verifyReward, timestamp, "reward")
+		verifyRewardHistory := RewardType{
+			Type:   "verifyReward",
+			To:     org,
+			Amount: verifyReward,
+		}
+		buyAIModel.History = append(buyAIModel.History, verifyRewardHistory)
+	}
+
+	buyAIModelAsBytes, err := json.Marshal(buyAIModel)
+	if err != nil {
+		return fmt.Errorf("failed to json.Marshal(). %v", err)
+	}
+	ctx.GetStub().PutState(makeBuyAIModelKey(uid, modelKey), buyAIModelAsBytes)
+
+	return nil
+}
+
+// TODO
+// func getIsBuyModel
+// func getAsset
+
+func (t *TradeChaincode) getAllHistory(uid string) error {
+	return nil
+}
+
+func (t *TradeChaincode) getQueryHistory(uid string) error {
+	return nil
 }
 
 func makeBuyAIModelKey(uid string, model string) string {
