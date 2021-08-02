@@ -184,7 +184,6 @@ function blockchain_chaincode_approveformyorg {
     --version $version \
     --package-id $PACKAGE_ID \
     --sequence $sequence \
-    --init-required \
     $GLOBAL_FLAGS"
 }
 
@@ -202,7 +201,6 @@ function blockchain_chaincode_checkcommitreadiness {
     --name $chaincode \
     --version $version \
     --sequence $sequence \
-    --init-required \
     $GLOBAL_FLAGS"
 }
 
@@ -220,7 +218,6 @@ function blockchain_chaincode_commit {
     --name $chaincode \
     --version $version \
     --sequence $sequence \
-    --init-required \
     $GLOBAL_FLAGS"
 }
 
@@ -249,7 +246,6 @@ function blockchain_chaincode_init {
     peer chaincode invoke  \
     --channelID $channel \
     --name $chaincode \
-    --isInit \
     -c $fcn_call \
     $GLOBAL_FLAGS"
 }
@@ -288,6 +284,10 @@ function blockchain_chaincode_query {
 }
 
 function blockchain_chaincode_upgrade {
+
+    # TODO
+    # rm -rf $bdir/asset/chaicnodes/${chaincodeName}
+    # cp -rf $sdir/asset/chaicnodes/${chaincodeName} $bdir/asset/chaicnodes/${chaincodeName}
     CHANNEL=$1
     CHAINCODE_NAME=$2
     VERSION=$3
@@ -312,11 +312,8 @@ function blockchain_chaincode_upgrade {
         blockchain_chaincode_approveformyorg $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
         sleep 1s
         blockchain_chaincode_checkcommitreadiness $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
-        blockchain_chaincode_commit 'peer0.management.pusan.ac.kr' $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
-        blockchain_chaincode_querycommitted 'peer0.management.pusan.ac.kr' $CHANNEL
     done
-
-    blockchain_chaincode_init
+    blockchain_chaincode_commit 'peer0.management.pusan.ac.kr' $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
 }
 
 function blockchain_chaincode_getpackageid {
@@ -328,28 +325,34 @@ function blockchain_chaincode_getpackageid {
 }
 
 function blockchain_test {
-    date=$(date '+%Y-%m-%d-%H-%M-%S')
+    blockchain_chaincode_init
+    # date=$(date '+%Y-%m-%d-%H-%M-%S')
 
-    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["yohan"]}'
+    # blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
+    # blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
-    # meow is lacking error
-    blockchain_chaincode_invoke '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
+    # # NOTE meow is lacking error
+    # blockchain_chaincode_invoke '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
 
-    blockchain_chaincode_invoke '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
-    sleep 2s
+    # blockchain_chaincode_invoke '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
+    # sleep 2s
 
-    #price mismatch error
-    blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","300","'$date'"]}'
+    # # NOTE price mismatch error
+    # blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","300","'$date'"]}'
 
-    blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
+    # blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
 
-    sleep 2s
-    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["yohan"]}'
+    # # NOTE already buy model
+    # blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
+
+    # sleep 2s
+    # blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
+    # blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["yohan"]}'
+
+    # blockchain_chaincode_query '{"function":"GetQueryHistory","Args":["hyoeun"]}'
 
     # TODO
-    # blockchain_chaincode_upgrade trade trade 2.0 2
+    # blockchain_chaincode_upgrade trade trade 4.0 4
 }
 
 function main {

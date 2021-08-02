@@ -21,6 +21,14 @@ type MeowType struct {
 	Amount uint32 `json:"amount"`
 }
 
+// TransferType ...
+type TransferType struct {
+	Type   string `json:"type"`
+	From   string `json:"from"`
+	To     string `json:"to"`
+	Amount uint32 `json:"amount"`
+}
+
 // RewardType ...
 type RewardType struct {
 	Type   string `json:"type"`
@@ -48,22 +56,34 @@ type Model struct {
 
 // InitLedger ...
 func (t *TradeChaincode) InitLedger(ctx contractapi.TransactionContextInterface) error {
-	initMeow := MeowType{
-		Type:   "GenesisMint",
-		Amount: GENESIS_MINT_AMOUNT,
-	}
-
-	initMeowAsBytes, err := json.Marshal(initMeow)
+	isInitBytes, err := ctx.GetStub().GetState("isInit")
 	if err != nil {
-		return fmt.Errorf("failed to json.Marshal(). %v", err)
-	}
+		return fmt.Errorf("failed GetState('isInit')")
+	} else if isInitBytes == nil {
+		initMeow := MeowType{
+			Type:   "GenesisMint",
+			Amount: GENESIS_MINT_AMOUNT,
+		}
 
-	ctx.GetStub().PutState(makeMeowKey("bank"), initMeowAsBytes)
-	if err != nil {
-		return fmt.Errorf("failed to put to world state. %v", err)
-	}
+		initMeowAsBytes, err := json.Marshal(initMeow)
+		if err != nil {
+			return fmt.Errorf("failed to json.Marshal(). %v", err)
+		}
 
-	return nil
+		ctx.GetStub().PutState(makeMeowKey("bank"), initMeowAsBytes)
+		if err != nil {
+			return fmt.Errorf("failed to put to world state. %v", err)
+		}
+
+		ctx.GetStub().PutState("isInit", []byte{0x1})
+		if err != nil {
+			return fmt.Errorf("failed to put to world state. %v", err)
+		}
+
+		return nil
+	} else {
+		return fmt.Errorf("already initialized")
+	}
 }
 
 // GetCurrentMeow ...
@@ -88,17 +108,19 @@ func (t *TradeChaincode) GetCurrentMeow(ctx contractapi.TransactionContextInterf
 // Transfer ...
 func (t *TradeChaincode) Transfer(ctx contractapi.TransactionContextInterface, from string, to string, amount uint32, timestamp string, meowType string) error {
 	// INSERT Transfer history
-	rewardMeow := MeowType{
-		Type:   meowType,
+	transferMeow := TransferType{
+		Type:   "transfer",
+		From:   from,
+		To:     to,
 		Amount: amount,
 	}
 
-	rewardMeowAsBytes, err := json.Marshal(rewardMeow)
+	transferMeowAsBytes, err := json.Marshal(transferMeow)
 	if err != nil {
 		return fmt.Errorf("failed to json.Marshal(). %v", err)
 	}
-	rewardMeowKey := makeFromToMeowKey(from, to, timestamp)
-	ctx.GetStub().PutState(rewardMeowKey, rewardMeowAsBytes)
+	transferMeowKey := makeFromToMeowKey(from, to, timestamp)
+	ctx.GetStub().PutState(transferMeowKey, transferMeowAsBytes)
 
 	if err != nil {
 		return fmt.Errorf("failed to put to world state. %v", err)
@@ -240,12 +262,47 @@ func (t *TradeChaincode) BuyModel(ctx contractapi.TransactionContextInterface, u
 // func getIsBuyModel
 // func getAsset
 
+func getQueryResultForQueryString(ctx contractapi.TransactionContextInterface, queryString string) ([]*TransferType, error) {
+	resultsIterator, err := ctx.GetStub().GetQueryResult(queryString)
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	var transferHistorys []*TransferType
+	for resultsIterator.HasNext() {
+		queryResult, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+		var transferHistory TransferType
+		err = json.Unmarshal(queryResult.Value, &transferHistory)
+		if err != nil {
+			return nil, err
+		}
+		transferHistorys = append(transferHistorys, &transferHistory)
+	}
+
+	return transferHistorys, nil
+}
+
 func (t *TradeChaincode) getAllHistory(uid string) error {
 	return nil
 }
 
-func (t *TradeChaincode) getQueryHistory(uid string) error {
-	return nil
+func (t *TradeChaincode) GetQueryHistory(ctx contractapi.TransactionContextInterface, uid string) ([]*TransferType, error) {
+	queryString := fmt.Sprintf(`{"selector":{"type":"transfer","$or":[{"from":"%s"},{"to":"%s"}]}}`, uid, uid)
+	return getQueryResultForQueryString(ctx, queryString)
+}
+
+func (t *TradeChaincode) GetQueryFromHistory(ctx contractapi.TransactionContextInterface, uid string) ([]*TransferType, error) {
+	queryString := fmt.Sprintf(`{"selector":{"type":"transfer","from":"%s"}}`, uid)
+	return getQueryResultForQueryString(ctx, queryString)
+}
+
+func (t *TradeChaincode) GetQueryToHistory(ctx contractapi.TransactionContextInterface, uid string) ([]*TransferType, error) {
+	queryString := fmt.Sprintf(`{"selector":{"type":"transfer","to":"%s"}}`, uid)
+	return getQueryResultForQueryString(ctx, queryString)
 }
 
 func makeBuyAIModelKey(uid string, model string) string {
