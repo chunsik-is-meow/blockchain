@@ -11,6 +11,8 @@ services:
     environment:
       - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
     command: sh -c 'fabric-ca-server start -b admin:adminpw-d'
+    ports:
+      - 9054:7054
     volumes:
       - >-
         ../artifacts/crypto-config/peerOrganizations/verification-02.pusan.ac.kr/ca:/etc/hyperledger/fabric-ca-server-crypto

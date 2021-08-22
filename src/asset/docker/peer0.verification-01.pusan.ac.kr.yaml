@@ -35,6 +35,7 @@ services:
       - COUCHDB_PASSWORD=adminpw
     ports:
       - 6984:5984
+      - 8051:7051
   cli.peer0.verification-01.pusan.ac.kr:
     restart: always
     container_name: cli.peer0.verification-01.pusan.ac.kr

@@ -13,6 +13,8 @@ services:
       - FABRIC_LOGGING_SPEC=info
     working_dir: /etc/hyperledger/orderer
     command: orderer
+    ports:
+      - 8050:7050
     volumes:
       - ../config/orderer.yaml:/etc/hyperledger/orderer/orderer.yaml
       - ../artifacts/block:/etc/hyperledger/orderer/block
