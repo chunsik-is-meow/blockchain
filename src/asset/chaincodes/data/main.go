@@ -1,14 +1,10 @@
-/*
-SPDX-License-Identifier: Apache-2.0
-*/
-
 package main
 
 import (
 	"log"
 
+	"github.com/chunsik-is-meow/blockchain/src/asset/chaincodes/data/contract"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
-	"github.com/hyperledger/fabric-samples/asset-transfer-basic/chaincode-go/chaincode"
 )
 
 func main() {

@@ -326,30 +326,30 @@ function blockchain_chaincode_getpackageid {
 
 function blockchain_test {
     blockchain_chaincode_init
-    # date=$(date '+%Y-%m-%d-%H-%M-%S')
+    date=$(date '+%Y-%m-%d-%H-%M-%S')
 
-    # blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    # blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["yohan"]}'
+    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
+    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
-    # # NOTE meow is lacking error
-    # blockchain_chaincode_invoke '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
+    # NOTE meow is lacking error
+    blockchain_chaincode_invoke '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
 
-    # blockchain_chaincode_invoke '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
-    # sleep 2s
+    blockchain_chaincode_invoke '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
+    sleep 2s
 
-    # # NOTE price mismatch error
-    # blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","300","'$date'"]}'
+    # NOTE price mismatch error
+    blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","300","'$date'"]}'
 
-    # blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
+    blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
 
-    # # NOTE already buy model
-    # blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
+    # NOTE already buy model
+    blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
 
-    # sleep 2s
-    # blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    # blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["yohan"]}'
+    sleep 2s
+    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
+    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
-    # blockchain_chaincode_query '{"function":"GetQueryHistory","Args":["hyoeun"]}'
+    blockchain_chaincode_query '{"function":"GetQueryHistory","Args":["hyoeun"]}'
 
     # TODO
     # blockchain_chaincode_upgrade trade trade 4.0 4
