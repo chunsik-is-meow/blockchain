@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 
+	"github.com/chunsik-is-meow/blockchain/src/asset/chaincodes/ai-model/contract"
+	"github.com/chunsik-is-meow/blockchain/src/asset/chaincodes/data/contract"
 	"github.com/chunsik-is-meow/blockchain/src/asset/chaincodes/trade/contract"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )

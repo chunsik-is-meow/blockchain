@@ -175,7 +175,7 @@ function blockchain_chaincode_approveformyorg {
     version=$4
     sequence=$5
     blockchain_chaincode_getpackageid $peer $chaincode $version
-
+    
     command "docker exec -it \
     cli.$peer \
     peer lifecycle chaincode approveformyorg \

@@ -1,4 +1,4 @@
-module github.com/chunsik-is-meow/blockchain/src/asset/chaincodes/trade
+module github.com/chunsik-is-meow/blockchain/src/asset/chaincodes/
 
 go 1.15
 
