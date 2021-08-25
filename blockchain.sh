@@ -7,36 +7,6 @@ shdir="$( cd "$(dirname "$0")" ; pwd -P)"
 source $shdir/scripts/utils.sh
 export COMPOSE_IGNORE_ORPHANS=True
 
-function bockchain_usage {
-    cecho "RED" "not implemantation now"
-}
-
-function blockchain_all {
-    blockchain_build
-    blockchain_up
-    blockchain_channel
-    blockchain_chaincode
-}
-
-function blockchain_clean {
-    blockchain_down
-    rm -rf $bdir
-}
-
-function blockchain_build {
-    # isExist build
-    # -> print err / exit
-
-    # else
-    mkdir -p $bdir &&  \
-    cp -rf $sdir/asset $bdir/ && \
-    mkdir -p $bdir/asset/artifacts/block && \
-    mkdir -p $bdir/asset/artifacts/tx >> /dev/null 2>&1
-
-    blockchain_build_cryptogen
-    blockchain_build_configtxgen
-}
-
 function blockchain_build_cryptogen {
     command "docker run -it --rm \
     -v $bdir:/workdir \
@@ -71,6 +41,68 @@ function blockchain_build_configtxgen_channel_tx {
     --workdir /workdir \
     hyperledger/fabric-tools:$fv \
     configtxgen -profile $1Profile -channelID $1 -outputCreateChannelTx /workdir/tx/$1.tx -configPath /workdir"
+}
+
+function blockchain_channel_create {
+    command "docker exec -it \
+    cli.peer0.management.pusan.ac.kr \
+    peer channel create -c $1 -f /etc/hyperledger/fabric/tx/$1.tx --outputBlock /etc/hyperledger/fabric/block/$1.block $GLOBAL_FLAGS"
+}
+
+function blockchain_channel_join {
+    command "docker exec -it \
+    cli.peer0.$1.pusan.ac.kr \
+    peer channel join -b /etc/hyperledger/fabric/block/$2.block"
+}
+
+function blockchain_chaincode_package {
+    command "docker exec -it \
+    cli.peer0.management.pusan.ac.kr \
+    peer lifecycle chaincode package $CHAINCODE_DIR/$1-$VERSION.tar.gz --path $CHAINCODE_DIR/$1 --lang golang --label $1-$VERSION"
+}
+
+function blockchain_chaincode_install {
+    command "docker exec -it \
+    cli.$1 \
+    peer lifecycle chaincode install $CHAINCODE_DIR/$2-$VERSION.tar.gz"
+}
+
+function blockchain_chaincode_getpackageid {
+    command "docker exec -it \
+    cli.$1 \
+    peer lifecycle chaincode queryinstalled"
+
+    PACKAGE_ID=$(sed -n "/$2-$3/{s/^Package ID: //; s/, Label:.*$//; p;}" $bdir/log.txt)
+}
+
+function bockchain_usage {
+    cecho "RED" "not implemantation now"
+}
+
+function blockchain_all {
+    blockchain_build
+    blockchain_up
+    blockchain_channel
+    blockchain_chaincode
+}
+
+function blockchain_clean {
+    blockchain_down
+    rm -rf $bdir
+}
+
+function blockchain_build {
+    # isExist build
+    # -> print err / exit
+
+    # else
+    mkdir -p $bdir &&  \
+    cp -rf $sdir/asset $bdir/ && \
+    mkdir -p $bdir/asset/artifacts/block && \
+    mkdir -p $bdir/asset/artifacts/tx >> /dev/null 2>&1
+
+    blockchain_build_cryptogen
+    blockchain_build_configtxgen
 }
 
 function blockchain_up {
@@ -110,18 +142,6 @@ function blockchain_channel {
     done
 }
 
-function blockchain_channel_create {
-    command "docker exec -it \
-    cli.peer0.management.pusan.ac.kr \
-    peer channel create -c $1 -f /etc/hyperledger/fabric/tx/$1.tx --outputBlock /etc/hyperledger/fabric/block/$1.block $GLOBAL_FLAGS"
-}
-
-function blockchain_channel_join {
-    command "docker exec -it \
-    cli.peer0.$1.pusan.ac.kr \
-    peer channel join -b /etc/hyperledger/fabric/block/$2.block"
-}
-
 function blockchain_chaincode {
     for CHAINCODE_NAME in ${CHAINCODES[@]}
     do
@@ -154,18 +174,6 @@ function blockchain_chaincode {
     done
 
     blockchain_chaincode_init
-}
-
-function blockchain_chaincode_package {
-    command "docker exec -it \
-    cli.peer0.management.pusan.ac.kr \
-    peer lifecycle chaincode package $CHAINCODE_DIR/$1-$VERSION.tar.gz --path $CHAINCODE_DIR/$1 --lang golang --label $1-$VERSION"
-}
-
-function blockchain_chaincode_install {
-    command "docker exec -it \
-    cli.$1 \
-    peer lifecycle chaincode install $CHAINCODE_DIR/$2-$VERSION.tar.gz"
 }
 
 function blockchain_chaincode_approveformyorg {
@@ -314,14 +322,6 @@ function blockchain_chaincode_upgrade {
         blockchain_chaincode_checkcommitreadiness $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
     done
     blockchain_chaincode_commit 'peer0.management.pusan.ac.kr' $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
-}
-
-function blockchain_chaincode_getpackageid {
-    command "docker exec -it \
-    cli.$1 \
-    peer lifecycle chaincode queryinstalled"
-
-    PACKAGE_ID=$(sed -n "/$2-$3/{s/^Package ID: //; s/, Label:.*$//; p;}" $bdir/log.txt)
 }
 
 function blockchain_test {

@@ -6,15 +6,9 @@ import (
 	"strings"
 	"io/ioutil"
     "os"
+	
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
-
-type Info struct{
-    Username string
-    Password string
-    Hostname string
-    Port string
-}
 
 // DataChaincode ...
 type DataChaincode struct {
@@ -36,7 +30,7 @@ func (t *DataChaincode) DataInsert(ctx contractapi.TransactionContextInterface, 
 	dataMeow := DataType{
 		Type:	"data",
 		Name:	name,
-		Size:	size,
+		Size:	100,
 		Year:	year,
 		Classification:	classfication,
 		Description:	description,
@@ -82,11 +76,17 @@ func (t *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterfac
 	return nil
 }
 
+type irisInfo struct{
+    Min string
+    Max string
+    Mean string
+    SD string
+}
 
 func (t *DataChaincode) GetCommonData(ctx contractapi.TransactionContextInterface, key string, timestamp string) error {
-	data, err := os.Open("../datas/iris.json")
+	data, err := os.Open("../../datas/iris.json")
 	byteValue, _ := ioutil.ReadAll(data)
-	var data_info Info
+	var data_info irisInfo
 
 	json.Unmarshal(byteValue, &db_info)
 

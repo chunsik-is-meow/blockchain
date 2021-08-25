@@ -8,48 +8,107 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
-// AIChaincode ...
-type AIChaincode struct {
+const GENESIS_MINT_AMOUNT = 100000000
+
+// TradeChaincode ...
+type TradeChaincode struct {
 	contractapi.Contract
 }
 
-// AIModelType ...
-type AIModelType struct {
-	ObjectType         string `json:"docType"`
-	Name       string `json:"name"`
-	Score       int    `json:"score"`
-	OwnelID       string `json:"ownelID"`
-	SrcDataID       string `json:"srcDataID"`
-	Description      string `json:"description"`
+// MeowType ...
+type MeowType struct {
+	Type   string `json:"type"`
+	Amount uint32 `json:"amount"`
 }
 
-
-func (t *DataChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, key string, model string, timestamp string) error {
-	return nil
+// TransferType ...
+type TransferType struct {
+	Type   string `json:"type"`
+	From   string `json:"from"`
+	To     string `json:"to"`
+	Amount uint32 `json:"amount"`
 }
 
-
-func (t *DataChaincode) GetAIModel(ctx contractapi.TransactionContextInterface, key string, timestamp string) error {
-	return nil
+// RewardType ...
+type RewardType struct {
+	Type   string `json:"type"`
+	To     string `json:"to"`
+	Amount uint32 `json:"amount"`
 }
 
-
-func (t *DataChaincode) checkScore(ctx contractapi.TransactionContextInterface, model string) error {
-	return nil
+//BuyAIModelType ...
+type BuyAIModelType struct {
+	Timestamp string       `json:"timestamp"`
+	History   []RewardType `json:"history"`
 }
 
-
-func (t *DataChaincode) isVaildData(ctx contractapi.TransactionContextInterface, srcDataID string) error {
-	return nil
+// ModelResult ...
+type ModelResult struct {
+	F1Score string `json:"f1_score"`
 }
 
+// Model ...
+type Model struct {
+	VerificationOrgs []string    `json:"verification_orgs"`
+	Result           ModelResult `json:"model_result"`
+	Price            uint32      `json:"price"`
+}
 
+// InitLedger ...
+func (t *TradeChaincode) InitLedger(ctx contractapi.TransactionContextInterface) error {
+	isInitBytes, err := ctx.GetStub().GetState("isInit")
+	if err != nil {
+		return fmt.Errorf("failed GetState('isInit')")
+	} else if isInitBytes == nil {
+		initMeow := MeowType{
+			Type:   "GenesisMint",
+			Amount: GENESIS_MINT_AMOUNT,
+		}
 
+		initMeowAsBytes, err := json.Marshal(initMeow)
+		if err != nil {
+			return fmt.Errorf("failed to json.Marshal(). %v", err)
+		}
+
+		ctx.GetStub().PutState(makeMeowKey("bank"), initMeowAsBytes)
+		if err != nil {
+			return fmt.Errorf("failed to put to world state. %v", err)
+		}
+
+		ctx.GetStub().PutState("isInit", []byte{0x1})
+		if err != nil {
+			return fmt.Errorf("failed to put to world state. %v", err)
+		}
+
+		return nil
+	} else {
+		return fmt.Errorf("already initialized")
+	}
+}
+
+// GetCurrentMeow ...
+func (t *TradeChaincode) GetCurrentMeow(ctx contractapi.TransactionContextInterface, uid string) (*MeowType, error) {
+	currentMeow := &MeowType{}
+	currentMeowAsBytes, err := ctx.GetStub().GetState(makeMeowKey(uid))
+	if err != nil {
+		return nil, err
+	} else if currentMeowAsBytes == nil {
+		currentMeow.Type = "CurrentMeowAmount"
+		currentMeow.Amount = 0
+	} else {
+		err = json.Unmarshal(currentMeowAsBytes, currentMeow)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return currentMeow, nil
+}
 
 // Transfer ...
-func (t *AIChaincode) Transfer(ctx contractapi.TransactionContextInterface, from string, to string, amount uint32, timestamp string) error {
+func (t *TradeChaincode) Transfer(ctx contractapi.TransactionContextInterface, from string, to string, amount uint32, timestamp string, meowType string) error {
 	// INSERT Transfer history
-	transferMeow := AIModelType{
+	transferMeow := TransferType{
 		Type:   "transfer",
 		From:   from,
 		To:     to,
@@ -106,99 +165,175 @@ func (t *AIChaincode) Transfer(ctx contractapi.TransactionContextInterface, from
 	return nil
 }
 
-package contract
-
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-	"io/ioutil"
-    "os"
-	"github.com/hyperledger/fabric-contract-api-go/contractapi"
-)
-
-type Info struct{
-    Username string
-    Password string
-    Hostname string
-    Port string
-}
-
-// DataChaincode ...
-type DataChaincode struct {
-	contractapi.Contract
-}
-
-// DataType ...
-type DataType struct {
-	Type         string `json:"type"`
-	Name       string `json:"name"`
-	Size       int    `json:"size"`
-	Year       string `json:"year"`
-	Classification   string `json:"classification"`
-	Description      string `json:"description"`
-}
-
-// INSERT Data history
-func (t *DataChaincode) DataInsert(ctx contractapi.TransactionContextInterface, name string, size uint32, year string, classfication string, description string, timestamp string) error {
-	dataMeow := DataType{
-		Type:	"data",
-		Name:	name,
-		Size:	size,
-		Year:	year,
-		Classification:	classfication,
-		Description:	description,
+// BuyModel ...
+func (t *TradeChaincode) BuyModel(ctx contractapi.TransactionContextInterface, uid string, modelKey string, price uint32, timestamp string) error {
+	checkBuyAIModelAsBytes, err := ctx.GetStub().GetState(makeBuyAIModelKey(uid, modelKey))
+	if err != nil {
+		return fmt.Errorf("failed to get BuyAiModel. %v", err)
+	} else if checkBuyAIModelAsBytes != nil {
+		return fmt.Errorf("already buy model ...")
 	}
 
-	dataMeowAsBytes, err := json.Marshal(dataMeow)
+	// TODO
+	// GetModel from ai-model-channel
+	// check isNotExist Model Error
+	// modelKey -> ai-model channel query getModel(modelKey) ->
+	// Model {
+	// 	v orgs
+	// 	result
+	//  price
+	// }
+
+	model := Model{
+		VerificationOrgs: []string{"verification-01"},
+		Result: ModelResult{
+			F1Score: "93.4%",
+		},
+		Price: 3000,
+	}
+
+	if price != model.Price {
+		return fmt.Errorf("the price mismatch in blockchain ..")
+	}
+
+	currentMeow, err := t.GetCurrentMeow(ctx, uid)
+	if err != nil {
+		return fmt.Errorf("failed to get current meow. %v", err)
+	}
+
+	if currentMeow.Amount < price {
+		return fmt.Errorf("meow is lacking.. %v", err)
+	}
+
+	// NOTE
+	// modelKey -> AI_uid_modelName_version(unique)
+	seller := strings.Split(modelKey, "_")[1]
+	verificationOrgs := model.VerificationOrgs
+
+	if price%10 != 0 {
+		return fmt.Errorf("only available in units of 10 meow")
+	}
+
+	income := price * 8 / 10
+	verifyReward := price * 1 / 10
+	manageReward := price * 1 / 10
+
+	t.Transfer(ctx, uid, seller, income, timestamp, "income")
+	t.Transfer(ctx, uid, "admin", manageReward, timestamp, "reward")
+
+	buyAIModel := BuyAIModelType{
+		Timestamp: timestamp,
+		History: []RewardType{
+			{
+				Type:   "income",
+				To:     seller,
+				Amount: income,
+			},
+			{
+				Type:   "manageReward",
+				To:     "admin",
+				Amount: manageReward,
+			},
+		},
+	}
+
+	for _, org := range verificationOrgs {
+		// TODO
+		// divide verifyReward
+		t.Transfer(ctx, uid, org, verifyReward, timestamp, "reward")
+		verifyRewardHistory := RewardType{
+			Type:   "verifyReward",
+			To:     org,
+			Amount: verifyReward,
+		}
+		buyAIModel.History = append(buyAIModel.History, verifyRewardHistory)
+	}
+
+	buyAIModelAsBytes, err := json.Marshal(buyAIModel)
 	if err != nil {
 		return fmt.Errorf("failed to json.Marshal(). %v", err)
 	}
-	dataMeowKey := makedataMeowKey(classfication, timestamp)
-	ctx.GetStub().PutState(dataMeowKey, dataMeowAsBytes)
-	if err != nil {
-		return fmt.Errorf("failed to put to world state. %v", err)
-	}
+	ctx.GetStub().PutState(makeBuyAIModelKey(uid, modelKey), buyAIModelAsBytes)
 
 	return nil
 }
 
-func makedataMeowKey(classfication string, timestamp string) string {
+// TODO
+// func getIsBuyModel
+// func getAsset
+
+func getQueryResultForQueryString(ctx contractapi.TransactionContextInterface, queryString string) ([]*TransferType, error) {
+	resultsIterator, err := ctx.GetStub().GetQueryResult(queryString)
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	var transferHistorys []*TransferType
+	for resultsIterator.HasNext() {
+		queryResult, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+		var transferHistory TransferType
+		err = json.Unmarshal(queryResult.Value, &transferHistory)
+		if err != nil {
+			return nil, err
+		}
+		transferHistorys = append(transferHistorys, &transferHistory)
+	}
+
+	return transferHistorys, nil
+}
+
+func (t *TradeChaincode) getAllHistory(uid string) error {
+	return nil
+}
+
+func (t *TradeChaincode) GetQueryHistory(ctx contractapi.TransactionContextInterface, uid string) ([]*TransferType, error) {
+	queryString := fmt.Sprintf(`{"selector":{"type":"transfer","$or":[{"from":"%s"},{"to":"%s"}]}}`, uid, uid)
+	return getQueryResultForQueryString(ctx, queryString)
+}
+
+func (t *TradeChaincode) GetQueryFromHistory(ctx contractapi.TransactionContextInterface, uid string) ([]*TransferType, error) {
+	queryString := fmt.Sprintf(`{"selector":{"type":"transfer","from":"%s"}}`, uid)
+	return getQueryResultForQueryString(ctx, queryString)
+}
+
+func (t *TradeChaincode) GetQueryToHistory(ctx contractapi.TransactionContextInterface, uid string) ([]*TransferType, error) {
+	queryString := fmt.Sprintf(`{"selector":{"type":"transfer","to":"%s"}}`, uid)
+	return getQueryResultForQueryString(ctx, queryString)
+}
+
+func makeBuyAIModelKey(uid string, model string) string {
 	var sb strings.Builder
 
-	sb.WriteString("D_")
-	sb.WriteString(classfication)
+	sb.WriteString("B_")
+	sb.WriteString(uid)
 	sb.WriteString("_")
-	sb.WriteString(timestamp)
+	sb.WriteString(model)
 
 	return sb.String()
 }
 
-func (t *TradeChaincode) GetQueryDataHistory(ctx contractapi.TransactionContextInterface) ([]*TransferType, error) {
-	queryString := fmt.Sprintf(`{"selector":{"type":"data"}}`)
-	return getQueryResultForQueryString(ctx, queryString)
+func makeMeowKey(uid string) string {
+	var sb strings.Builder
+
+	sb.WriteString("M_")
+	sb.WriteString(uid)
+
+	return sb.String()
 }
 
-func (t *TradeChaincode) GetQueryDataClassficationHistory(ctx contractapi.TransactionContextInterface, classfication string) ([]*TransferType, error) {
-	queryString := fmt.Sprintf(`{"selector":{"type":"transfer","classfication":"%s"}}`, classfication)
-	return getQueryResultForQueryString(ctx, queryString)
-}
+func makeFromToMeowKey(from string, to string, timestamp string) string {
+	var sb strings.Builder
 
-func (t *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterface, key string, data string, timestamp string) error {
-	//TODO
+	sb.WriteString("F_")
+	sb.WriteString(from)
+	sb.WriteString("_T_")
+	sb.WriteString(to)
+	sb.WriteString("_")
+	sb.WriteString(timestamp)
 
-	return nil
-}
-
-
-func (t *DataChaincode) GetCommonData(ctx contractapi.TransactionContextInterface, key string, timestamp string) error {
-	data, err := os.Open("../datas/%s.json", key)
-	byteValue, _ := ioutil.ReadAll(data)
-	var db_info Info
-
-	json.Unmarshal(byteValue, &db_info)
-
-	fmt.Println(db_info)
-
-	return nil
+	return sb.String()
 }
