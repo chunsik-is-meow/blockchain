@@ -1,4 +1,4 @@
-package contract
+package ai
 
 import (
 	"encoding/json"
