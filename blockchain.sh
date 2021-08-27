@@ -330,6 +330,7 @@ function blockchain_test {
     
     blockchain_chaincode_init trade
     blockchain_chaincode_init data
+    blockchain_chaincode_init ai-model
     date=$(date '+%Y-%m-%d-%H-%M-%S')
     
     #################################################### trade chaincode ####################################################

@@ -8,12 +8,12 @@ import (
 )
 
 func main() {
-	dataChaincode, err := contractapi.NewChaincode(&contract.DataChaincode{})
+	tradeChaincode, err := contractapi.NewChaincode(&contract.TradeChaincode{})
 	if err != nil {
-		log.Panicf("Error creating dataChaincode: %v", err)
+		log.Panicf("Error creating tradeChaincode: %v", err)
 	}
 
-	if err := dataChaincode.Start(); err != nil {
-		log.Panicf("Error starting dataChaincode: %v", err)
+	if err := tradeChaincode.Start(); err != nil {
+		log.Panicf("Error starting tradeChaincode: %v", err)
 	}
 }
