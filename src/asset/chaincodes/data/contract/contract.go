@@ -27,7 +27,7 @@ type DataType struct {
 func (d *DataChaincode) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	dataInfos := []DataType{
 		{Type: "data", Name: "adult", Description: "Census Income classfication", Downloaded: 0, Owner: "Ronny Kohavi and Barry Becker", Timestamp: "2021-08-27-09-11-49"},
-		{Type: "data", Name: "breast-cancer-wisconsin", Description: "Cancer  classfication", Downloaded: 0, Owner: "Olvi L. Mangasarian, Computer Sciences Dept.", Timestamp: "2021-08-27-09-11-49"},
+		{Type: "data", Name: "breast-cancer-wisconsin", Description: "Cancer classfication", Downloaded: 0, Owner: "Olvi L. Mangasarian.", Timestamp: "2021-08-27-09-11-49"},
 	}
 
 	isInitBytes, err := ctx.GetStub().GetState("isInit")
@@ -121,6 +121,7 @@ func (d *DataChaincode) GetCommonDataInfo(ctx contractapi.TransactionContextInte
 		dataInfo.Description = "empty"
 		dataInfo.Downloaded = 0
 		dataInfo.Owner = "empty"
+		dataInfo.Timestamp = "empty"
 	} else {
 		err = json.Unmarshal(dataAsBytes, dataInfo)
 		if err != nil {

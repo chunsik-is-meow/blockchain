@@ -27,8 +27,8 @@ type AIModelType struct {
 // InitLedger ...
 func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	aiModelInfos := []AIModelType{
-		{Type: "aiModel", Name: "adult learning model", Language: "python", Price: 2400, Owner: "AAA", Timestamp: "2021-08-27-09-11-49"},
-		{Type: "aiModel", Name: "cancer learning model", Language: "go", Price: 3100, Owner: "BBB", Timestamp: "2021-08-27-09-11-49"},
+		{Type: "aiModel", Name: "adult learning model", Language: "python", Price: 2400, Owner: "AAA", Description: "adult learning", Timestamp: "2021-08-27-09-11-49"},
+		{Type: "aiModel", Name: "cancer learning model", Language: "go", Price: 3100, Owner: "BBB", Description: "cancer learning", Timestamp: "2021-08-27-09-11-49"},
 	}
 
 	isInitBytes, err := ctx.GetStub().GetState("isInit")
@@ -126,6 +126,9 @@ func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface
 		aiModelInfo.Language = "empty"
 		aiModelInfo.Price = 0
 		aiModelInfo.Owner = "empty"
+		aiModelInfo.Description = "empty"
+		aiModelInfo.Language = "empty"
+		aiModelInfo.Timestamp = "empty"
 	} else {
 		err = json.Unmarshal(aiModelAsBytes, aiModelInfo)
 		if err != nil {
