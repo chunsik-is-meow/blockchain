@@ -35,12 +35,13 @@ func (d *DataChaincode) InitLedger(ctx contractapi.TransactionContextInterface) 
 		return fmt.Errorf("failed GetState('isInit')")
 	} else if isInitBytes == nil {
 		for _, data := range dataInfos {
-			assetJSON, err := json.Marshal(data)
+			dataAsBytes, err := json.Marshal(data)
 			if err != nil {
 				return fmt.Errorf("failed to json.Marshal(). %v", err)
 			}
 
-			err = ctx.GetStub().PutState(data.Name, assetJSON)
+			dataKey := makeDataKey(data.Owner)
+			ctx.GetStub().PutState(dataKey, dataAsBytes)
 			if err != nil {
 				return fmt.Errorf("failed to put to world state. %v", err)
 			}
@@ -54,11 +55,19 @@ func (d *DataChaincode) InitLedger(ctx contractapi.TransactionContextInterface) 
 
 // DataInsert ...
 func (d *DataChaincode) DataInsert(ctx contractapi.TransactionContextInterface, name string, description string, owner string, timestamp string) error {
+	// TODO
+	// data file upload
+	return nil
+}
+
+func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterface, name string, description string, owner string, timestamp string) error {
+	// d.DataInsert(ctx, name, description, owner, timestamp)
+	down := 0
 	data := DataType{
 		Type:        "data",
 		Name:        name,
 		Description: description,
-		Downloaded:  0,
+		Downloaded:  down,
 		Owner:       owner,
 		Timestamp:   timestamp,
 	}
@@ -71,13 +80,6 @@ func (d *DataChaincode) DataInsert(ctx contractapi.TransactionContextInterface, 
 	if err != nil {
 		return fmt.Errorf("failed to put to world state. %v", err)
 	}
-	return ctx.GetStub().PutState(name, dataAsBytes)
-}
-
-func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterface, name string, description string, owner string, timestamp string) error {
-	// TODO
-	// 실제 데이터 업로드 메소드: 이건 웹에서 해야할 듯
-	d.DataInsert(ctx, name, description, owner, timestamp)
 
 	return nil
 }
