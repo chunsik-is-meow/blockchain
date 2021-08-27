@@ -12,5 +12,6 @@ sudo apt-get update
 docker kill $(docker ps -a -q)
 docker system prune
 docker volume prune
+sudo chown -R (USERNAME) ./ 
 ## if the same error occur...
 in docker desktop: image clean up

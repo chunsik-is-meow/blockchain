@@ -330,7 +330,7 @@ function blockchain_test {
     
     blockchain_chaincode_init trade
     blockchain_chaincode_init data
-    blockchain_chaincode_init ai-model
+    # blockchain_chaincode_init ai-model
     date=$(date '+%Y-%m-%d-%H-%M-%S')
     
     #################################################### trade chaincode ####################################################
@@ -359,32 +359,29 @@ function blockchain_test {
 
 
     #################################################### data chaincode ####################################################
-    getOrderer data
     blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
 
-    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris", "iris classfication", "R.A. Fisher","'$date'"]}'
-    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["wine", "wine classfication", "PARVUS","'$date'"]}'
+    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$date'"]}'
+    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["wine","wine_classfication","PARVUS","'$date'"]}'
     blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
     
     # NOTE data is exist error
-    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris", "iris classfication", "R.A. Fisher","'$date'"]}'
+    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$date'"]}'
 
 
     #################################################### ai chaincode ####################################################
-    getOrderer data
-    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
+    # blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
 
-    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris", "iris classfication", "R.A. Fisher","'$date'"]}'
-    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["wine", "wine classfication", "PARVUS","'$date'"]}'
-    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
+    # blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris","iris classfication","R.A. Fisher","'$date'"]}'
+    # blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["wine","wine classfication","PARVUS","'$date'"]}'
+    # blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
     
-    # NOTE data is exist error
-    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris", "iris classfication", "R.A. Fisher","'$date'"]}'
+    # # NOTE data is exist error
+    # blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris","iris classfication","R.A. Fisher","'$date'"]}'
 
     # # TODO
     # for CHANNEL in ${CHANNELS[@]}
     # do
-    #     getOrderer $CHANNEL
     #     blockchain_chaincode_upgrade CHANNEL CHANNEL 4.0 4 
     # done
 }

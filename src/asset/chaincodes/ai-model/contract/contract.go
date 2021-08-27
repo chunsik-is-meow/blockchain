@@ -66,7 +66,7 @@ func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, na
 		return err
 	}
 	if exists {
-		return fmt.Errorf("the data %s already exists", name)
+		return fmt.Errorf("the aiModel %s already exists", name)
 	}
 	aiModel := AIModelType{
 		Type:        "aiModel",
