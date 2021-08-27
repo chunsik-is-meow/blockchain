@@ -329,7 +329,6 @@ function blockchain_chaincode_upgrade {
     blockchain_chaincode_commit 'peer0.management.pusan.ac.kr' $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
 }
 
-<<<<<<< HEAD
 
 function blockchain_test {
     
@@ -361,34 +360,6 @@ function blockchain_test {
 
     blockchain_chaincode_query trade '{"function":"GetQueryHistory","Args":["hyoeun"]}'
 
-=======
-function blockchain_test {
-    blockchain_chaincode_init
-    date=$(date '+%Y-%m-%d-%H-%M-%S')
-
-    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["yohan"]}'
-
-    # NOTE meow is lacking error
-    blockchain_chaincode_invoke '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
-
-    blockchain_chaincode_invoke '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
-    sleep 2s
-
-    # NOTE price mismatch error
-    blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","300","'$date'"]}'
-
-    blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
-
-    # NOTE already buy model
-    blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
-
-    sleep 2s
-    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["yohan"]}'
-
-    blockchain_chaincode_query '{"function":"GetQueryHistory","Args":["hyoeun"]}'
->>>>>>> 107f59d9b943719b0ed2e0c2b8943f05b4376fd4
 
     #################################################### data chaincode ####################################################
     getOrderer data
