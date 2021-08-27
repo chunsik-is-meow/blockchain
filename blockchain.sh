@@ -173,12 +173,8 @@ function blockchain_chaincode {
         blockchain_chaincode_querycommitted 'peer0.management.pusan.ac.kr' $CHANNEL
     done
 
-<<<<<<< HEAD
     blockchain_chaincode_init trade
     blockchain_chaincode_init data
-=======
-    blockchain_chaincode_init
->>>>>>> 107f59d9b943719b0ed2e0c2b8943f05b4376fd4
 }
 
 function blockchain_chaincode_approveformyorg {
