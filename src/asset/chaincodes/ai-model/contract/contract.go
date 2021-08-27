@@ -55,6 +55,19 @@ func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) er
 
 // AIModelInsert ...
 func (a *AIChaincode) AIModelInsert(ctx contractapi.TransactionContextInterface, name string, language string, price int, owner string, description string, timestamp string) error {
+	// TODO
+	return nil
+}
+
+func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, name string, language string, price int, owner string, description string, timestamp string) error {
+	// a.AIModelInsert(ctx, name, language, price, owner, description, timestamp)
+	exists, err := a.aiModelExists(ctx, name)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("the data %s already exists", name)
+	}
 	aiModel := AIModelType{
 		Type:        "aiModel",
 		Name:        name,
@@ -73,18 +86,10 @@ func (a *AIChaincode) AIModelInsert(ctx contractapi.TransactionContextInterface,
 	if err != nil {
 		return fmt.Errorf("failed to put to world state. %v", err)
 	}
-	return ctx.GetStub().PutState(name, aiModelAsBytes)
-}
-
-func (a *AIChaincode) PutCommonAIModel(ctx contractapi.TransactionContextInterface, name string, description string, owner string, timestamp string) error {
-	// TODO
-	// 실제 데이터 업로드 메소드: 이건 웹에서 해야할 듯
-	a.AIModelInsert(ctx, name, description, owner, timestamp)
-
 	return nil
 }
 
-func (a *AIChaincode) GetAllCommonAIModelInfo(ctx contractapi.TransactionContextInterface) ([]*AIModelType, error) {
+func (a *AIChaincode) GetAllAIModelInfo(ctx contractapi.TransactionContextInterface) ([]*AIModelType, error) {
 	// TODO
 	var aiModelInfos []*AIModelType
 	aiModelsAsBytes, err := ctx.GetStub().GetStateByRange("", "")
@@ -109,7 +114,7 @@ func (a *AIChaincode) GetAllCommonAIModelInfo(ctx contractapi.TransactionContext
 	return aiModelInfos, nil
 }
 
-func (a *AIChaincode) GetCommonAIModelInfo(ctx contractapi.TransactionContextInterface, name string) (*AIModelType, error) {
+func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface, name string) (*AIModelType, error) {
 	// TODO
 	aiModelInfo := &AIModelType{}
 	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(name))
@@ -139,7 +144,7 @@ func makeAIModelKey(classfication string) string {
 	return sb.String()
 }
 
-func (a *AIChaincode) AssetExists(ctx contractapi.TransactionContextInterface, name string) (bool, error) {
+func (a *AIChaincode) aiModelExists(ctx contractapi.TransactionContextInterface, name string) (bool, error) {
 	assetJSON, err := ctx.GetStub().GetState(name)
 	if err != nil {
 		return false, fmt.Errorf("failed to read from world state: %v", err)

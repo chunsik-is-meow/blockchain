@@ -62,6 +62,13 @@ func (d *DataChaincode) DataInsert(ctx contractapi.TransactionContextInterface, 
 
 func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterface, name string, description string, owner string, timestamp string) error {
 	// d.DataInsert(ctx, name, description, owner, timestamp)
+	exists, err := d.dataExists(ctx, name)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("the data %s already exists", name)
+	}
 	down := 0
 	data := DataType{
 		Type:        "data",
@@ -139,7 +146,7 @@ func makeDataKey(classfication string) string {
 	return sb.String()
 }
 
-func (d *DataChaincode) AssetExists(ctx contractapi.TransactionContextInterface, name string) (bool, error) {
+func (d *DataChaincode) dataExists(ctx contractapi.TransactionContextInterface, name string) (bool, error) {
 	assetJSON, err := ctx.GetStub().GetState(name)
 	if err != nil {
 		return false, fmt.Errorf("data is exist...: %v", err)

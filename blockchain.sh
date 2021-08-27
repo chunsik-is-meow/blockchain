@@ -368,6 +368,18 @@ function blockchain_test {
     # NOTE data is exist error
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris", "iris classfication", "R.A. Fisher","'$date'"]}'
 
+
+    #################################################### ai chaincode ####################################################
+    getOrderer data
+    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
+
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris", "iris classfication", "R.A. Fisher","'$date'"]}'
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["wine", "wine classfication", "PARVUS","'$date'"]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
+    
+    # NOTE data is exist error
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris", "iris classfication", "R.A. Fisher","'$date'"]}'
+
     # # TODO
     # for CHANNEL in ${CHANNELS[@]}
     # do
