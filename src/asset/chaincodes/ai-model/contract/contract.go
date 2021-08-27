@@ -17,17 +17,18 @@ type AIChaincode struct {
 type AIModelType struct {
 	Type        string `json:"type"`
 	Name        string `json:"name"`
-	Description string `json:"description"`
-	Downloaded  int    `json:"downloaded"`
+	Language    string `json:"language"`
+	Price       int    `json:"price"`
 	Owner       string `json:"owner"`
+	Description string `json:"description"`
 	Timestamp   string `json:"timestamp"`
 }
 
 // InitLedger ...
 func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	aiModelInfos := []AIModelType{
-		{Type: "aiModel", Name: "adult", Description: "Census Income classfication", Downloaded: 0, Owner: "Ronny Kohavi and Barry Becker", Timestamp: "2021-08-27-09-11-49"},
-		{Type: "aiModel", Name: "breast-cancer-wisconsin", Description: "Cancer  classfication", Downloaded: 0, Owner: "Olvi L. Mangasarian, Computer Sciences Dept.", Timestamp: "2021-08-27-09-11-49"},
+		{Type: "aiModel", Name: "adult learning model", Language: "python", Price: 2400, Owner: "AAA", Timestamp: "2021-08-27-09-11-49"},
+		{Type: "aiModel", Name: "cancer learning model", Language: "go", Price: 3100, Owner: "BBB", Timestamp: "2021-08-27-09-11-49"},
 	}
 
 	isInitBytes, err := ctx.GetStub().GetState("isInit")
@@ -53,13 +54,14 @@ func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) er
 }
 
 // AIModelInsert ...
-func (a *AIChaincode) AIModelInsert(ctx contractapi.TransactionContextInterface, name string, description string, owner string, timestamp string) error {
+func (a *AIChaincode) AIModelInsert(ctx contractapi.TransactionContextInterface, name string, language string, price int, owner string, description string, timestamp string) error {
 	aiModel := AIModelType{
 		Type:        "aiModel",
 		Name:        name,
-		Description: description,
-		Downloaded:  0,
+		Language:    language,
+		Price:       price,
 		Owner:       owner,
+		Description: description,
 		Timestamp:   timestamp,
 	}
 	aiModelAsBytes, err := json.Marshal(aiModel)
@@ -116,8 +118,8 @@ func (a *AIChaincode) GetCommonAIModelInfo(ctx contractapi.TransactionContextInt
 	} else if aiModelAsBytes == nil {
 		aiModelInfo.Type = "empty"
 		aiModelInfo.Name = "empty"
-		aiModelInfo.Description = "empty"
-		aiModelInfo.Downloaded = 0
+		aiModelInfo.Language = "empty"
+		aiModelInfo.Price = 0
 		aiModelInfo.Owner = "empty"
 	} else {
 		err = json.Unmarshal(aiModelAsBytes, aiModelInfo)
