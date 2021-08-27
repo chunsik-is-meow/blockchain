@@ -1,4 +1,4 @@
-module github.com/chunsik-is-meow/blockchain/src/asset/chaincodes/data
+module github.com/chunsik-is-meow/blockchain/src/asset/chaincodes/ai-model
 
 go 1.15
 

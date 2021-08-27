@@ -173,8 +173,10 @@ function blockchain_chaincode {
         blockchain_chaincode_querycommitted 'peer0.management.pusan.ac.kr' $CHANNEL
     done
 
-    blockchain_chaincode_init trade
-    blockchain_chaincode_init data
+    for CHANNEL in ${CHANNELS[@]}
+    do
+        blockchain_chaincode_init $CHANNEL
+    done
 }
 
 function blockchain_chaincode_approveformyorg {
@@ -298,9 +300,9 @@ function blockchain_chaincode_upgrade {
     # rm -rf $bdir/asset/chaicnodes/${chaincodeName}
     # cp -rf $sdir/asset/chaicnodes/${chaincodeName} $bdir/asset/chaicnodes/${chaincodeName}
     CHANNEL=$1
-    CHAINCODE_NAME=$2
-    VERSION=$3
-    SEQUENCE=$4
+    CHAINCODE_NAME=$1
+    VERSION=$2
+    SEQUENCE=$3
 
     blockchain_chaincode_package $CHAINCODE_NAME
     for PEER_NAME in ${PEERS[@]}
@@ -327,12 +329,13 @@ function blockchain_chaincode_upgrade {
 
 
 function blockchain_test {
-    
-    blockchain_chaincode_init trade
-    blockchain_chaincode_init data
-    # blockchain_chaincode_init ai-model
+    for CHANNEL in ${CHANNELS[@]}
+    do
+        blockchain_chaincode_init $CHANNEL
+    done
     date=$(date '+%Y-%m-%d-%H-%M-%S')
-    
+    price=3100
+
     #################################################### trade chaincode ####################################################
     
     blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
@@ -369,20 +372,20 @@ function blockchain_test {
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$date'"]}'
 
 
-    #################################################### ai chaincode ####################################################
-    # blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
+    #################################################### ai-model chaincode ####################################################
+    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
 
-    # blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris","iris classfication","R.A. Fisher","'$date'"]}'
-    # blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["wine","wine classfication","PARVUS","'$date'"]}'
-    # blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris_learning_model","C","'$price'","CCC","iris_learning","'$date'"]}'
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["wine_learning_model","C","'$price'","DDD","wine_learning","'$date'"]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
     
-    # # NOTE data is exist error
-    # blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris","iris classfication","R.A. Fisher","'$date'"]}'
+    # NOTE ai-model is exist error
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris_learning_model","C","'$price'","CCC","iris_learning","'$date'"]}'
 
     # # TODO
     # for CHANNEL in ${CHANNELS[@]}
     # do
-    #     blockchain_chaincode_upgrade CHANNEL CHANNEL 4.0 4 
+    #     blockchain_chaincode_upgrade $CHANNEL 4.0 4 
     # done
 }
 

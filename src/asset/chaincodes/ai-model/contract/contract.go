@@ -20,6 +20,7 @@ type AIModelType struct {
 	Language    string `json:"language"`
 	Price       int    `json:"price"`
 	Owner       string `json:"owner"`
+	Score       int    `json:"score"`
 	Description string `json:"description"`
 	Timestamp   string `json:"timestamp"`
 }
@@ -27,8 +28,8 @@ type AIModelType struct {
 // InitLedger ...
 func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	aiModelInfos := []AIModelType{
-		{Type: "aiModel", Name: "adult learning model", Language: "python", Price: 2400, Owner: "AAA", Description: "adult learning", Timestamp: "2021-08-27-09-11-49"},
-		{Type: "aiModel", Name: "cancer learning model", Language: "go", Price: 3100, Owner: "BBB", Description: "cancer learning", Timestamp: "2021-08-27-09-11-49"},
+		{Type: "ai-model", Name: "adult_learning_model", Language: "python", Price: 2400, Owner: "AAA", Score: 75, Description: "adult_learning", Timestamp: "2021-08-27-09-11-49"},
+		{Type: "ai-model", Name: "cancer_learning_model", Language: "go", Price: 3100, Owner: "BBB", Score: 82, Description: "cancer_learning", Timestamp: "2021-08-27-09-11-49"},
 	}
 
 	isInitBytes, err := ctx.GetStub().GetState("isInit")
@@ -36,17 +37,17 @@ func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) er
 		return fmt.Errorf("failed GetState('isInit')")
 	} else if isInitBytes == nil {
 		for _, aiModel := range aiModelInfos {
-			assetJSON, err := json.Marshal(aiModel)
+			aiModelAsBytes, err := json.Marshal(aiModel)
 			if err != nil {
 				return fmt.Errorf("failed to json.Marshal(). %v", err)
 			}
 
-			err = ctx.GetStub().PutState(aiModel.Name, assetJSON)
+			aiModelKey := makeAIModelKey(aiModel.Name)
+			ctx.GetStub().PutState(aiModelKey, aiModelAsBytes)
 			if err != nil {
 				return fmt.Errorf("failed to put to world state. %v", err)
 			}
 		}
-
 		return nil
 	} else {
 		return fmt.Errorf("already initialized")
@@ -54,13 +55,14 @@ func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) er
 }
 
 // AIModelInsert ...
-func (a *AIChaincode) AIModelInsert(ctx contractapi.TransactionContextInterface, name string, language string, price int, owner string, description string, timestamp string) error {
+func (a *AIChaincode) AIModelInsert(ctx contractapi.TransactionContextInterface, name string, description string, owner string, timestamp string) error {
 	// TODO
+	// aiModel file upload
 	return nil
 }
 
 func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, name string, language string, price int, owner string, description string, timestamp string) error {
-	// a.AIModelInsert(ctx, name, language, price, owner, description, timestamp)
+	// a.AIModelInsert(ctx, name, description, owner, timestamp)
 	exists, err := a.aiModelExists(ctx, name)
 	if err != nil {
 		return err
@@ -68,12 +70,19 @@ func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, na
 	if exists {
 		return fmt.Errorf("the aiModel %s already exists", name)
 	}
+	file := ""
+	score, err := evaluateScore(ctx, file)
+	if err != nil {
+		return err
+	}
+
 	aiModel := AIModelType{
-		Type:        "aiModel",
+		Type:        "ai-model",
 		Name:        name,
 		Language:    language,
 		Price:       price,
 		Owner:       owner,
+		Score:       score,
 		Description: description,
 		Timestamp:   timestamp,
 	}
@@ -81,16 +90,16 @@ func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, na
 	if err != nil {
 		return fmt.Errorf("failed to json.Marshal(). %v", err)
 	}
-	aiModelKey := makeAIModelKey(owner)
+	aiModelKey := makeAIModelKey(name)
 	ctx.GetStub().PutState(aiModelKey, aiModelAsBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put to world state. %v", err)
 	}
+
 	return nil
 }
 
 func (a *AIChaincode) GetAllAIModelInfo(ctx contractapi.TransactionContextInterface) ([]*AIModelType, error) {
-	// TODO
 	var aiModelInfos []*AIModelType
 	aiModelsAsBytes, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {
@@ -115,7 +124,6 @@ func (a *AIChaincode) GetAllAIModelInfo(ctx contractapi.TransactionContextInterf
 }
 
 func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface, name string) (*AIModelType, error) {
-	// TODO
 	aiModelInfo := &AIModelType{}
 	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(name))
 	if err != nil {
@@ -126,6 +134,7 @@ func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface
 		aiModelInfo.Language = "empty"
 		aiModelInfo.Price = 0
 		aiModelInfo.Owner = "empty"
+		aiModelInfo.Score = 0
 		aiModelInfo.Description = "empty"
 		aiModelInfo.Language = "empty"
 		aiModelInfo.Timestamp = "empty"
@@ -139,26 +148,32 @@ func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface
 	return aiModelInfo, nil
 }
 
-func makeAIModelKey(classfication string) string {
+func makeAIModelKey(key string) string {
 	var sb strings.Builder
 
-	sb.WriteString("D_")
-	sb.WriteString(classfication)
+	sb.WriteString("A_")
+	sb.WriteString(key)
 	return sb.String()
 }
 
 func (a *AIChaincode) aiModelExists(ctx contractapi.TransactionContextInterface, name string) (bool, error) {
-	assetJSON, err := ctx.GetStub().GetState(name)
+	aiModelAsBytes, err := ctx.GetStub().GetState(name)
 	if err != nil {
-		return false, fmt.Errorf("failed to read from world state: %v", err)
+		return false, fmt.Errorf("ai-model is exist...: %v", err)
 	}
 
-	return assetJSON != nil, nil
+	return aiModelAsBytes != nil, nil
 }
 
 func (a *AIChaincode) GetQueryAIModelHistory(ctx contractapi.TransactionContextInterface) ([]*AIModelType, error) {
-	queryString := fmt.Sprintf(`{"selector":{"type":"aiModel"}}`)
+	queryString := fmt.Sprintf(`{"selector":{"type":"ai-model"}}`)
 	return getQueryResultForQueryString(ctx, queryString)
+}
+
+func evaluateScore(ctx contractapi.TransactionContextInterface, aiModel string) (int, error) {
+	// TODO
+	score := 81
+	return score, nil
 }
 
 func getQueryResultForQueryString(ctx contractapi.TransactionContextInterface, queryString string) ([]*AIModelType, error) {

@@ -40,7 +40,7 @@ func (d *DataChaincode) InitLedger(ctx contractapi.TransactionContextInterface) 
 				return fmt.Errorf("failed to json.Marshal(). %v", err)
 			}
 
-			dataKey := makeDataKey(data.Owner)
+			dataKey := makeDataKey(data.Name)
 			ctx.GetStub().PutState(dataKey, dataAsBytes)
 			if err != nil {
 				return fmt.Errorf("failed to put to world state. %v", err)
@@ -83,7 +83,7 @@ func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterfac
 	if err != nil {
 		return fmt.Errorf("failed to json.Marshal(). %v", err)
 	}
-	dataKey := makeDataKey(owner)
+	dataKey := makeDataKey(name)
 	ctx.GetStub().PutState(dataKey, dataAsBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put to world state. %v", err)
@@ -138,21 +138,21 @@ func (d *DataChaincode) GetCommonDataInfo(ctx contractapi.TransactionContextInte
 	return dataInfo, nil
 }
 
-func makeDataKey(classfication string) string {
+func makeDataKey(key string) string {
 	var sb strings.Builder
 
 	sb.WriteString("D_")
-	sb.WriteString(classfication)
+	sb.WriteString(key)
 	return sb.String()
 }
 
 func (d *DataChaincode) dataExists(ctx contractapi.TransactionContextInterface, name string) (bool, error) {
-	assetJSON, err := ctx.GetStub().GetState(name)
+	dataAsBytes, err := ctx.GetStub().GetState(name)
 	if err != nil {
 		return false, fmt.Errorf("data is exist...: %v", err)
 	}
 
-	return assetJSON != nil, nil
+	return dataAsBytes != nil, nil
 }
 
 func (d *DataChaincode) GetQueryDataHistory(ctx contractapi.TransactionContextInterface) ([]*DataType, error) {
