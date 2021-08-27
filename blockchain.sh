@@ -351,7 +351,6 @@ function blockchain_test {
     # NOTE already buy model
     blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
 
-    sleep 2s
     blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
     blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
