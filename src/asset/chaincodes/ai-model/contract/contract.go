@@ -1,0 +1,176 @@
+package contract
+
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+
+	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+)
+
+// AIChaincode ...
+type AIChaincode struct {
+	contractapi.Contract
+}
+
+// AIModelType ...
+type AIModelType struct {
+	Type        string `json:"type"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Downloaded  int    `json:"downloaded"`
+	Owner       string `json:"owner"`
+	Timestamp   string `json:"timestamp"`
+}
+
+// InitLedger ...
+func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) error {
+	aiModelInfos := []AIModelType{
+		{Type: "aiModel", Name: "adult", Description: "Census Income classfication", Downloaded: 0, Owner: "Ronny Kohavi and Barry Becker", Timestamp: "2021-08-27-09-11-49"},
+		{Type: "aiModel", Name: "breast-cancer-wisconsin", Description: "Cancer  classfication", Downloaded: 0, Owner: "Olvi L. Mangasarian, Computer Sciences Dept.", Timestamp: "2021-08-27-09-11-49"},
+	}
+
+	isInitBytes, err := ctx.GetStub().GetState("isInit")
+	if err != nil {
+		return fmt.Errorf("failed GetState('isInit')")
+	} else if isInitBytes == nil {
+		for _, aiModel := range aiModelInfos {
+			assetJSON, err := json.Marshal(aiModel)
+			if err != nil {
+				return fmt.Errorf("failed to json.Marshal(). %v", err)
+			}
+
+			err = ctx.GetStub().PutState(aiModel.Name, assetJSON)
+			if err != nil {
+				return fmt.Errorf("failed to put to world state. %v", err)
+			}
+		}
+
+		return nil
+	} else {
+		return fmt.Errorf("already initialized")
+	}
+}
+
+// AIModelInsert ...
+func (a *AIChaincode) AIModelInsert(ctx contractapi.TransactionContextInterface, name string, description string, owner string, timestamp string) error {
+	aiModel := AIModelType{
+		Type:        "aiModel",
+		Name:        name,
+		Description: description,
+		Downloaded:  0,
+		Owner:       owner,
+		Timestamp:   timestamp,
+	}
+	aiModelAsBytes, err := json.Marshal(aiModel)
+	if err != nil {
+		return fmt.Errorf("failed to json.Marshal(). %v", err)
+	}
+	aiModelKey := makeAIModelKey(owner)
+	ctx.GetStub().PutState(aiModelKey, aiModelAsBytes)
+	if err != nil {
+		return fmt.Errorf("failed to put to world state. %v", err)
+	}
+	return ctx.GetStub().PutState(name, aiModelAsBytes)
+}
+
+func (a *AIChaincode) PutCommonAIModel(ctx contractapi.TransactionContextInterface, name string, description string, owner string, timestamp string) error {
+	// TODO
+	// 실제 데이터 업로드 메소드: 이건 웹에서 해야할 듯
+	a.AIModelInsert(ctx, name, description, owner, timestamp)
+
+	return nil
+}
+
+func (a *AIChaincode) GetAllCommonAIModelInfo(ctx contractapi.TransactionContextInterface) ([]*AIModelType, error) {
+	// TODO
+	var aiModelInfos []*AIModelType
+	aiModelsAsBytes, err := ctx.GetStub().GetStateByRange("", "")
+	if err != nil {
+		return nil, err
+	}
+
+	for aiModelsAsBytes.HasNext() {
+		queryResponse, err := aiModelsAsBytes.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		var aiModel AIModelType
+		err = json.Unmarshal(queryResponse.Value, &aiModel)
+		if err != nil {
+			return nil, err
+		}
+		aiModelInfos = append(aiModelInfos, &aiModel)
+	}
+
+	return aiModelInfos, nil
+}
+
+func (a *AIChaincode) GetCommonAIModelInfo(ctx contractapi.TransactionContextInterface, name string) (*AIModelType, error) {
+	// TODO
+	aiModelInfo := &AIModelType{}
+	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(name))
+	if err != nil {
+		return nil, err
+	} else if aiModelAsBytes == nil {
+		aiModelInfo.Type = "empty"
+		aiModelInfo.Name = "empty"
+		aiModelInfo.Description = "empty"
+		aiModelInfo.Downloaded = 0
+		aiModelInfo.Owner = "empty"
+	} else {
+		err = json.Unmarshal(aiModelAsBytes, aiModelInfo)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return aiModelInfo, nil
+}
+
+func makeAIModelKey(classfication string) string {
+	var sb strings.Builder
+
+	sb.WriteString("D_")
+	sb.WriteString(classfication)
+	return sb.String()
+}
+
+func (a *AIChaincode) AssetExists(ctx contractapi.TransactionContextInterface, name string) (bool, error) {
+	assetJSON, err := ctx.GetStub().GetState(name)
+	if err != nil {
+		return false, fmt.Errorf("failed to read from world state: %v", err)
+	}
+
+	return assetJSON != nil, nil
+}
+
+func (a *AIChaincode) GetQueryAIModelHistory(ctx contractapi.TransactionContextInterface) ([]*AIModelType, error) {
+	queryString := fmt.Sprintf(`{"selector":{"type":"aiModel"}}`)
+	return getQueryResultForQueryString(ctx, queryString)
+}
+
+func getQueryResultForQueryString(ctx contractapi.TransactionContextInterface, queryString string) ([]*AIModelType, error) {
+	resultsIterator, err := ctx.GetStub().GetQueryResult(queryString)
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	var transferHistorys []*AIModelType
+	for resultsIterator.HasNext() {
+		queryResult, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+		var transferHistory AIModelType
+		err = json.Unmarshal(queryResult.Value, &transferHistory)
+		if err != nil {
+			return nil, err
+		}
+		transferHistorys = append(transferHistorys, &transferHistory)
+	}
+
+	return transferHistorys, nil
+}

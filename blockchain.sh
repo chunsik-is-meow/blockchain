@@ -7,6 +7,17 @@ shdir="$( cd "$(dirname "$0")" ; pwd -P)"
 source $shdir/scripts/utils.sh
 export COMPOSE_IGNORE_ORPHANS=True
 
+function getOrderer {
+    channel=$1
+	for i in 0 1 2
+    do 
+		if [ "${CHANNELS[$i]}" == "$channel" ]; then
+			ORDERER=${ORDERER_ADDR[$i]}
+            return
+		fi
+	done
+}
+
 function bockchain_usage {
     cecho "RED" "not implemantation now"
 }
@@ -95,9 +106,10 @@ function blockchain_down {
 }
 
 function blockchain_channel {
-    for CHANNEL_NAME in ${CHANNELS[@]}
+    for CHANNEL in ${CHANNELS[@]}
     do
-        blockchain_channel_create $CHANNEL_NAME
+        getOrderer $CHANNEL
+        blockchain_channel_create $CHANNEL $ORDERER
         sleep 3s
         for ORG_NAME in ${ORGANIZATIONS[@]}
         do
@@ -113,7 +125,7 @@ function blockchain_channel {
 function blockchain_channel_create {
     command "docker exec -it \
     cli.peer0.management.pusan.ac.kr \
-    peer channel create -c $1 -f /etc/hyperledger/fabric/tx/$1.tx --outputBlock /etc/hyperledger/fabric/block/$1.block $GLOBAL_FLAGS"
+    peer channel create -c $1 -f /etc/hyperledger/fabric/tx/$1.tx --outputBlock /etc/hyperledger/fabric/block/$1.block -o $2 $GLOBAL_FLAGS"
 }
 
 function blockchain_channel_join {
@@ -138,6 +150,7 @@ function blockchain_chaincode {
 
     for CHANNEL in ${CHANNELS[@]}
     do
+        getOrderer $CHANNEL
         CHAINCODE_NAME=$CHANNEL
         for PEER_NAME in ${PEERS[@]}
         do
@@ -145,15 +158,19 @@ function blockchain_chaincode {
             then
                 continue
             fi
-                blockchain_chaincode_approveformyorg $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION 1
+                blockchain_chaincode_approveformyorg $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION 1 $ORDERER
                 sleep 1s
-                blockchain_chaincode_checkcommitreadiness $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION 1
+                blockchain_chaincode_checkcommitreadiness $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION 1 $ORDERER
         done
-        blockchain_chaincode_commit 'peer0.management.pusan.ac.kr' $CHANNEL $CHAINCODE_NAME $VERSION 1
-        blockchain_chaincode_querycommitted 'peer0.management.pusan.ac.kr' $CHANNEL
+        blockchain_chaincode_commit 'peer0.management.pusan.ac.kr' $CHANNEL $CHAINCODE_NAME $VERSION 1 $ORDERER
+        blockchain_chaincode_querycommitted 'peer0.management.pusan.ac.kr' $CHANNEL $ORDERER
     done
 
-    blockchain_chaincode_init
+    for CHANNEL in ${CHANNELS[@]}
+    do
+        getOrderer $CHANNEL
+        blockchain_chaincode_init $CHANNEL $ORDERER
+    done
 }
 
 function blockchain_chaincode_package {
@@ -174,6 +191,7 @@ function blockchain_chaincode_approveformyorg {
     chaincode=$3
     version=$4
     sequence=$5
+    orderer=$6
     blockchain_chaincode_getpackageid $peer $chaincode $version
 
     command "docker exec -it \
@@ -184,7 +202,7 @@ function blockchain_chaincode_approveformyorg {
     --version $version \
     --package-id $PACKAGE_ID \
     --sequence $sequence \
-    $GLOBAL_FLAGS"
+    -o $orderer $GLOBAL_FLAGS"
 }
 
 function blockchain_chaincode_checkcommitreadiness {
@@ -193,6 +211,7 @@ function blockchain_chaincode_checkcommitreadiness {
     chaincode=$3
     version=$4
     sequence=$5
+    orderer=$6
 
     command "docker exec -it \
     cli.$peer \
@@ -201,7 +220,7 @@ function blockchain_chaincode_checkcommitreadiness {
     --name $chaincode \
     --version $version \
     --sequence $sequence \
-    $GLOBAL_FLAGS"
+    -o $orderer $GLOBAL_FLAGS"
 }
 
 function blockchain_chaincode_commit {
@@ -210,6 +229,7 @@ function blockchain_chaincode_commit {
     chaincode=$3
     version=$4
     sequence=$5
+    orderer=$6
 
     command "docker exec -it \
     cli.$peer \
@@ -218,18 +238,19 @@ function blockchain_chaincode_commit {
     --name $chaincode \
     --version $version \
     --sequence $sequence \
-    $GLOBAL_FLAGS"
+    -o $orderer $GLOBAL_FLAGS"
 }
 
 function blockchain_chaincode_querycommitted {
     peer=$1
     channel=$2
+    orderer=$3
 
     command "docker exec -it \
     cli.$peer \
     peer lifecycle chaincode querycommitted  \
     --channelID $channel \
-    $GLOBAL_FLAGS"
+    -o $orderer $GLOBAL_FLAGS"
 }
 
 function blockchain_chaincode_init {
@@ -237,8 +258,9 @@ function blockchain_chaincode_init {
     # channel=$2
     # chaincode=$3
     peer=peer0.management.pusan.ac.kr
-    channel=trade
-    chaincode=trade
+    channel=$1
+    chaincode=$1
+    orderer=$2
     fcn_call='{"function":"InitLedger","Args":[]}'
 
     command "docker exec -it \
@@ -247,7 +269,7 @@ function blockchain_chaincode_init {
     --channelID $channel \
     --name $chaincode \
     -c $fcn_call \
-    $GLOBAL_FLAGS"
+    -o $orderer $GLOBAL_FLAGS"
 }
 
 function blockchain_chaincode_invoke {
@@ -255,16 +277,17 @@ function blockchain_chaincode_invoke {
     # channel=$2
     # chaincode=$3
     peer=peer0.management.pusan.ac.kr
-    channel=trade
-    chaincode=trade
+    channel=$1
+    chaincode=$1
+    orderer=$2
 
     command "docker exec -it \
     cli.$peer \
     peer chaincode invoke  \
     --channelID $channel \
     --name $chaincode \
-    -c $1 \
-    $GLOBAL_FLAGS"
+    -c $3 \
+    -o $orderer $GLOBAL_FLAGS"
 }
 
 function blockchain_chaincode_query {
@@ -272,19 +295,18 @@ function blockchain_chaincode_query {
     # channel=$2
     # chaincode=$3
     peer=peer0.management.pusan.ac.kr
-    channel=trade
-    chaincode=trade
+    channel=$1
+    chaincode=$1
 
     command "docker exec -it \
     cli.$peer \
     peer chaincode query  \
     --channelID $channel \
     --name $chaincode \
-    -c $1"
+    -c $2"
 }
 
 function blockchain_chaincode_upgrade {
-
     # TODO
     # rm -rf $bdir/asset/chaicnodes/${chaincodeName}
     # cp -rf $sdir/asset/chaicnodes/${chaincodeName} $bdir/asset/chaicnodes/${chaincodeName}
@@ -292,6 +314,7 @@ function blockchain_chaincode_upgrade {
     CHAINCODE_NAME=$2
     VERSION=$3
     SEQUENCE=$4
+    ORDERER=$5
 
     blockchain_chaincode_package $CHAINCODE_NAME
     for PEER_NAME in ${PEERS[@]}
@@ -309,11 +332,11 @@ function blockchain_chaincode_upgrade {
         then
             continue
         fi
-        blockchain_chaincode_approveformyorg $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
+        blockchain_chaincode_approveformyorg $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE $ORDERER
         sleep 1s
-        blockchain_chaincode_checkcommitreadiness $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
+        blockchain_chaincode_checkcommitreadiness $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE $ORDERER
     done
-    blockchain_chaincode_commit 'peer0.management.pusan.ac.kr' $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
+    blockchain_chaincode_commit 'peer0.management.pusan.ac.kr' $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE $ORDERER
 }
 
 function blockchain_chaincode_getpackageid {
@@ -325,34 +348,58 @@ function blockchain_chaincode_getpackageid {
 }
 
 function blockchain_test {
-    blockchain_chaincode_init
-    # date=$(date '+%Y-%m-%d-%H-%M-%S')
+    
+    for CHANNEL in ${CHANNELS[@]}
+    do
+        getOrderer $CHANNEL
+        blockchain_chaincode_init $CHANNEL $ORDERER
+    done
+    
+    date=$(date '+%Y-%m-%d-%H-%M-%S')
+    
+    #################################################### trade chaincode ####################################################
+    getOrderer trade
+    blockchain_chaincode_query trade $ORDERER '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
+    blockchain_chaincode_query trade $ORDERER '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
-    # blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    # blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["yohan"]}'
+    # NOTE meow is lacking error
+    blockchain_chaincode_invoke trade $ORDERER '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
 
-    # # NOTE meow is lacking error
-    # blockchain_chaincode_invoke '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
+    blockchain_chaincode_invoke trade $ORDERER '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
+    sleep 2s
 
-    # blockchain_chaincode_invoke '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
-    # sleep 2s
+    # NOTE price mismatch error
+    blockchain_chaincode_invoke trade $ORDERER '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","300","'$date'"]}'
 
-    # # NOTE price mismatch error
-    # blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","300","'$date'"]}'
+    blockchain_chaincode_invoke trade $ORDERER '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
 
-    # blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
+    # NOTE already buy model
+    blockchain_chaincode_invoke trade $ORDERER '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
 
-    # # NOTE already buy model
-    # blockchain_chaincode_invoke '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
+    sleep 2s
+    blockchain_chaincode_query trade $ORDERER '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
+    blockchain_chaincode_query trade $ORDERER '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
-    # sleep 2s
-    # blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    # blockchain_chaincode_query '{"function":"GetCurrentMeow","Args":["yohan"]}'
+    blockchain_chaincode_query trade $ORDERER '{"function":"GetQueryHistory","Args":["hyoeun"]}'
 
-    # blockchain_chaincode_query '{"function":"GetQueryHistory","Args":["hyoeun"]}'
 
-    # TODO
-    # blockchain_chaincode_upgrade trade trade 4.0 4
+    #################################################### data chaincode ####################################################
+    getOrderer data
+    blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
+
+    blockchain_chaincode_invoke data $ORDERER '{"function":"PutCommonData","Args":["iris", "iris classfication", "R.A. Fisher","'$date'"]}'
+    blockchain_chaincode_invoke data $ORDERER '{"function":"PutCommonData","Args":["wine", "wine classfication", "Forina, M. et al, PARVUS","'$date'"]}'
+    blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
+    
+    # NOTE data is exist error
+    blockchain_chaincode_invoke data $ORDERER '{"function":"PutCommonData","Args":["iris", "iris classfication", "R.A. Fisher","'$date'"]}'
+
+    # # TODO
+    # for CHANNEL in ${CHANNELS[@]}
+    # do
+    #     getOrderer $CHANNEL
+    #     blockchain_chaincode_upgrade CHANNEL CHANNEL 4.0 4  $ORDERER
+    # done
 }
 
 function main {
