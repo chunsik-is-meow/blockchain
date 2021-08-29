@@ -13,6 +13,8 @@ services:
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
     working_dir: /etc/hyperledger/fabric
     command: peer node start
+    ports:
+      - 8051:7051
     volumes:
       - >-
         ../config/peer0.verification-01.pusan.ac.kr-core.yaml:/etc/hyperledger/fabric/core.yaml
@@ -35,7 +37,6 @@ services:
       - COUCHDB_PASSWORD=adminpw
     ports:
       - 6984:5984
-      - 8051:7051
   cli.peer0.verification-01.pusan.ac.kr:
     restart: always
     container_name: cli.peer0.verification-01.pusan.ac.kr

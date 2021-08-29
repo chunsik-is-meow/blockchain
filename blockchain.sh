@@ -337,7 +337,7 @@ function blockchain_test {
     price=3100
 
     #################################################### trade chaincode ####################################################
-    
+
     blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
     blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
@@ -367,7 +367,7 @@ function blockchain_test {
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$date'"]}'
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["wine","wine_classfication","PARVUS","'$date'"]}'
     blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
-    
+
     # NOTE data is exist error
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$date'"]}'
 
@@ -378,14 +378,14 @@ function blockchain_test {
     blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris_learning_model","C","'$price'","CCC","iris_learning","'$date'"]}'
     blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["wine_learning_model","C","'$price'","DDD","wine_learning","'$date'"]}'
     blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
-    
+
     # NOTE ai-model is exist error
     blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris_learning_model","C","'$price'","CCC","iris_learning","'$date'"]}'
 
     # # TODO
     # for CHANNEL in ${CHANNELS[@]}
     # do
-    #     blockchain_chaincode_upgrade $CHANNEL 4.0 4 
+    #     blockchain_chaincode_upgrade $CHANNEL 4.0 4
     # done
 }
 
