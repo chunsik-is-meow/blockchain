@@ -335,52 +335,53 @@ function blockchain_test {
     done
     date=$(date '+%Y-%m-%d-%H-%M-%S')
     price=3100
-
+    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$date'"]}'
+    blockchain_chaincode_query data '{"function":"uploadsHandler","Args":["./iris.csv"]}'
     #################################################### trade chaincode ####################################################
 
-    blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
+    # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
+    # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
-    # NOTE meow is lacking error
-    blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
+    # # NOTE meow is lacking error
+    # blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
 
-    blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
-    sleep 2s
+    # blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
+    # sleep 2s
 
-    # NOTE price mismatch error
-    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","300","'$date'"]}'
+    # # NOTE price mismatch error
+    # blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","300","'$date'"]}'
 
-    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
+    # blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
 
-    # NOTE already buy model
-    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
+    # # NOTE already buy model
+    # blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
 
-    blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
+    # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
+    # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
-    blockchain_chaincode_query trade '{"function":"GetQueryHistory","Args":["hyoeun"]}'
-
-
-    #################################################### data chaincode ####################################################
-    blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
-
-    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$date'"]}'
-    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["wine","wine_classfication","PARVUS","'$date'"]}'
-    blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
-
-    # NOTE data is exist error
-    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$date'"]}'
+    # blockchain_chaincode_query trade '{"function":"GetQueryHistory","Args":["hyoeun"]}'
 
 
-    #################################################### ai-model chaincode ####################################################
-    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
+    # #################################################### data chaincode ####################################################
+    # blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
 
-    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris_learning_model","C","'$price'","CCC","iris_learning","'$date'"]}'
-    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["wine_learning_model","C","'$price'","DDD","wine_learning","'$date'"]}'
-    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
+    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$date'"]}'
+    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["wine","wine_classfication","PARVUS","'$date'"]}'
+    # blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
 
-    # NOTE ai-model is exist error
-    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris_learning_model","C","'$price'","CCC","iris_learning","'$date'"]}'
+    # # NOTE data is exist error
+    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$date'"]}'
+
+
+    # #################################################### ai-model chaincode ####################################################
+    # blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
+
+    # blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris_learning_model","C","'$price'","CCC","iris_learning","'$date'"]}'
+    # blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["wine_learning_model","C","'$price'","DDD","wine_learning","'$date'"]}'
+    # blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
+
+    # # NOTE ai-model is exist error
+    # blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris_learning_model","C","'$price'","CCC","iris_learning","'$date'"]}'
 
     # # TODO
     # for CHANNEL in ${CHANNELS[@]}

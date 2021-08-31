@@ -1,8 +1,15 @@
 package contract
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
@@ -182,4 +189,57 @@ func getQueryResultForQueryString(ctx contractapi.TransactionContextInterface, q
 	}
 
 	return transferHistorys, nil
+}
+
+func (d *DataChaincode) uploadsHandler(ctx contractapi.TransactionContextInterface, name string) (*DataType, error) {
+	dataInfo := &DataType{}
+	dataAsBytes, err := ctx.GetStub().GetState(makeDataKey(name))
+	if err != nil {
+		return nil, err
+	} else {
+		err = json.Unmarshal(dataAsBytes, dataInfo)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	path := "./iris.csv"
+	file, _ := os.Open(path)
+	defer file.Close()
+
+	buf := &bytes.Buffer{}
+	writer := multipart.NewWriter(buf)
+	multi, err := writer.CreateFormFile("upload_file", filepath.Base(path))
+	io.Copy(multi, file)
+	writer.Close()
+
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/uploads", buf)
+	req.Header.Set("Content-type", writer.FormDataContentType())
+
+	uploadFile, header, err := req.FormFile("upload_file")
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(res, err)
+		return nil, err
+	}
+	defer uploadFile.Close()
+
+	dirname := "./uploads"
+	os.MkdirAll(dirname, 0777)
+	filepath := fmt.Sprintf("%s/%s", dirname, header.Filename)
+	upload, err := os.Create(filepath)
+
+	defer upload.Close()
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(res, err)
+		return nil, err
+	}
+
+	io.Copy(upload, uploadFile)
+	res.WriteHeader(http.StatusOK)
+	fmt.Fprint(res, filepath)
+
+	return nil, err
 }
