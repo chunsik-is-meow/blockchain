@@ -191,55 +191,92 @@ func getQueryResultForQueryString(ctx contractapi.TransactionContextInterface, q
 	return transferHistorys, nil
 }
 
-func (d *DataChaincode) uploadsHandler(ctx contractapi.TransactionContextInterface, name string) (*DataType, error) {
-	dataInfo := &DataType{}
-	dataAsBytes, err := ctx.GetStub().GetState(makeDataKey(name))
+func uploadsHandler(w http.ResponseWriter, r *http.Request) {
+	uploadFile, header, err := r.FormFile("upload_file")
 	if err != nil {
-		return nil, err
-	} else {
-		err = json.Unmarshal(dataAsBytes, dataInfo)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	path := "./iris.csv"
-	file, _ := os.Open(path)
-	defer file.Close()
-
-	buf := &bytes.Buffer{}
-	writer := multipart.NewWriter(buf)
-	multi, err := writer.CreateFormFile("upload_file", filepath.Base(path))
-	io.Copy(multi, file)
-	writer.Close()
-
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest("POST", "/uploads", buf)
-	req.Header.Set("Content-type", writer.FormDataContentType())
-
-	uploadFile, header, err := req.FormFile("upload_file")
-	if err != nil {
-		res.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(res, err)
-		return nil, err
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, err)
+		return
 	}
 	defer uploadFile.Close()
 
 	dirname := "./uploads"
 	os.MkdirAll(dirname, 0777)
 	filepath := fmt.Sprintf("%s/%s", dirname, header.Filename)
-	upload, err := os.Create(filepath)
-
-	defer upload.Close()
+	file, err := os.Create(filepath)
+	defer file.Close()
 	if err != nil {
-		res.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(res, err)
-		return nil, err
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, err)
+		return
+	}
+	io.Copy(file, uploadFile)
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, filepath)
+}
+
+func (d *DataChaincode) DataUpload(ctx contractapi.TransactionContextInterface, path string) error {
+	now, _ := os.Getwd()
+
+	file, _ := os.Open(path)
+	defer file.Close()
+
+	buf := &bytes.Buffer{}
+	writer := multipart.NewWriter(buf)
+	multi, err := writer.CreateFormFile("upload_file", filepath.Base(path))
+	if err != nil {
+		return fmt.Errorf("error: %v", err)
 	}
 
-	io.Copy(upload, uploadFile)
-	res.WriteHeader(http.StatusOK)
-	fmt.Fprint(res, filepath)
+	io.Copy(multi, file)
+	writer.Close()
 
-	return nil, err
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/uploads", buf)
+
+	req.Header.Set("Content-type", writer.FormDataContentType())
+
+	uploadsHandler(res, req)
+	uploadFilePath := "./upload/" + filepath.Base(path)
+	_, err = os.Stat(uploadFilePath)
+	if err != nil {
+		return fmt.Errorf("%s error: %v", now, err)
+	} else {
+		return nil
+	}
 }
+
+// func (d *DataChaincode) DataUpload(ctx contractapi.TransactionContextInterface, file string) error {
+// 	filePath := file
+// 	f, err := os.Open(filePath)
+// 	if err != nil {
+// 		return fmt.Errorf("error opening %s: %s", filePath, err)
+// 	}
+// 	defer f.Close()
+
+// 	buf := make([]byte, 8)
+// 	if _, err := io.ReadFull(f, buf); err != nil {
+// 		if err == io.EOF {
+// 			err = io.ErrUnexpectedEOF
+// 		}
+// 	}
+// 	io.WriteString(os.Stdout, string(buf))
+// 	fmt.Println()
+
+// 	uploadFilePath := "uploads/data" + file
+
+// 	if os.IsNotExist(err) {
+// 		uploadFilePath, err := os.Create(uploadFilePath)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			return fmt.Errorf("error: %v", err)
+// 		}
+// 		defer uploadFilePath.Close()
+// 	} else {
+// 		fmt.Println("File already exists!", file)
+// 		return fmt.Errorf("error: %v", err)
+// 	}
+
+// 	fmt.Println("File created successfully", file)
+// 	return nil
+// }

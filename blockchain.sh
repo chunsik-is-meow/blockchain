@@ -336,7 +336,7 @@ function blockchain_test {
     date=$(date '+%Y-%m-%d-%H-%M-%S')
     price=3100
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$date'"]}'
-    blockchain_chaincode_query data '{"function":"uploadsHandler","Args":["./iris.csv"]}'
+    blockchain_chaincode_query data '{"function":"DataUpload","Args":["src/asset/chaincodes/data/contract/iris.csv"]}'
     #################################################### trade chaincode ####################################################
 
     # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
