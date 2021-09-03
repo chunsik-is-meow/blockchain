@@ -1,15 +1,8 @@
 package contract
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
-	"mime/multipart"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
@@ -27,14 +20,14 @@ type DataType struct {
 	Description string `json:"description"`
 	Downloaded  int    `json:"downloaded"`
 	Owner       string `json:"owner"`
+	Contents    string `json:"contents`
 	Timestamp   string `json:"timestamp"`
 }
 
 // InitLedger ...
 func (d *DataChaincode) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	dataInfos := []DataType{
-		{Type: "data", Name: "adult", Description: "Census Income classfication", Downloaded: 0, Owner: "Ronny Kohavi and Barry Becker", Timestamp: "2021-08-27-09-11-49"},
-		{Type: "data", Name: "breast-cancer-wisconsin", Description: "Cancer classfication", Downloaded: 0, Owner: "Olvi L. Mangasarian.", Timestamp: "2021-08-27-09-11-49"},
+		{Type: "data", Name: "test", Description: "test", Downloaded: 0, Owner: "test", Contents: "test", Timestamp: "2021-08-27-09-11-49"},
 	}
 
 	isInitBytes, err := ctx.GetStub().GetState("isInit")
@@ -61,14 +54,7 @@ func (d *DataChaincode) InitLedger(ctx contractapi.TransactionContextInterface) 
 }
 
 // DataInsert ...
-func (d *DataChaincode) DataInsert(ctx contractapi.TransactionContextInterface, name string, description string, owner string, timestamp string) error {
-	// TODO
-	// data file upload
-	return nil
-}
-
-func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterface, name string, description string, owner string, timestamp string) error {
-	// d.DataInsert(ctx, name, description, owner, timestamp)
+func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterface, name string, description string, owner string, contents string, timestamp string) error {
 	exists, err := d.dataExists(ctx, name)
 	if err != nil {
 		return err
@@ -84,6 +70,7 @@ func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterfac
 		Description: description,
 		Downloaded:  down,
 		Owner:       owner,
+		Contents:    contents,
 		Timestamp:   timestamp,
 	}
 	dataAsBytes, err := json.Marshal(data)
@@ -134,6 +121,7 @@ func (d *DataChaincode) GetCommonDataInfo(ctx contractapi.TransactionContextInte
 		dataInfo.Description = "empty"
 		dataInfo.Downloaded = 0
 		dataInfo.Owner = "empty"
+		dataInfo.Contents = "empty"
 		dataInfo.Timestamp = "empty"
 	} else {
 		err = json.Unmarshal(dataAsBytes, dataInfo)
@@ -190,93 +178,3 @@ func getQueryResultForQueryString(ctx contractapi.TransactionContextInterface, q
 
 	return transferHistorys, nil
 }
-
-func uploadsHandler(w http.ResponseWriter, r *http.Request) {
-	uploadFile, header, err := r.FormFile("upload_file")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, err)
-		return
-	}
-	defer uploadFile.Close()
-
-	dirname := "./uploads"
-	os.MkdirAll(dirname, 0777)
-	filepath := fmt.Sprintf("%s/%s", dirname, header.Filename)
-	file, err := os.Create(filepath)
-	defer file.Close()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, err)
-		return
-	}
-	io.Copy(file, uploadFile)
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, filepath)
-}
-
-func (d *DataChaincode) DataUpload(ctx contractapi.TransactionContextInterface, path string) error {
-	now, _ := os.Getwd()
-
-	file, _ := os.Open(path)
-	defer file.Close()
-
-	buf := &bytes.Buffer{}
-	writer := multipart.NewWriter(buf)
-	multi, err := writer.CreateFormFile("upload_file", filepath.Base(path))
-	if err != nil {
-		return fmt.Errorf("error: %v", err)
-	}
-
-	io.Copy(multi, file)
-	writer.Close()
-
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest("POST", "/uploads", buf)
-
-	req.Header.Set("Content-type", writer.FormDataContentType())
-
-	uploadsHandler(res, req)
-	uploadFilePath := "./upload/" + filepath.Base(path)
-	_, err = os.Stat(uploadFilePath)
-	if err != nil {
-		return fmt.Errorf("%s error: %v", now, err)
-	} else {
-		return nil
-	}
-}
-
-// func (d *DataChaincode) DataUpload(ctx contractapi.TransactionContextInterface, file string) error {
-// 	filePath := file
-// 	f, err := os.Open(filePath)
-// 	if err != nil {
-// 		return fmt.Errorf("error opening %s: %s", filePath, err)
-// 	}
-// 	defer f.Close()
-
-// 	buf := make([]byte, 8)
-// 	if _, err := io.ReadFull(f, buf); err != nil {
-// 		if err == io.EOF {
-// 			err = io.ErrUnexpectedEOF
-// 		}
-// 	}
-// 	io.WriteString(os.Stdout, string(buf))
-// 	fmt.Println()
-
-// 	uploadFilePath := "uploads/data" + file
-
-// 	if os.IsNotExist(err) {
-// 		uploadFilePath, err := os.Create(uploadFilePath)
-// 		if err != nil {
-// 			fmt.Println(err)
-// 			return fmt.Errorf("error: %v", err)
-// 		}
-// 		defer uploadFilePath.Close()
-// 	} else {
-// 		fmt.Println("File already exists!", file)
-// 		return fmt.Errorf("error: %v", err)
-// 	}
-
-// 	fmt.Println("File created successfully", file)
-// 	return nil
-// }

@@ -327,6 +327,18 @@ function blockchain_chaincode_upgrade {
     blockchain_chaincode_commit 'peer0.management.pusan.ac.kr' $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
 }
 
+function file_upload {
+    temp=$1
+    contents=`cat $temp`
+    echo $contents | tr ' ' '^' > up.txt
+    FILECONTENTS=`cat up.txt`
+}
+function file_download {
+    temp=$1
+    contents=`cat $temp`
+    echo $contents | tr '^' '\n' > down.txt
+    FILECONTENTS=`cat down.txt`
+}
 
 function blockchain_test {
     for CHANNEL in ${CHANNELS[@]}
@@ -335,8 +347,6 @@ function blockchain_test {
     done
     date=$(date '+%Y-%m-%d-%H-%M-%S')
     price=3100
-    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$date'"]}'
-    blockchain_chaincode_query data '{"function":"DataUpload","Args":["src/asset/chaincodes/data/contract/iris.csv"]}'
     #################################################### trade chaincode ####################################################
 
     # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
@@ -362,15 +372,26 @@ function blockchain_test {
     # blockchain_chaincode_query trade '{"function":"GetQueryHistory","Args":["hyoeun"]}'
 
 
-    # #################################################### data chaincode ####################################################
+    #################################################### data chaincode ####################################################
     # blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
 
-    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$date'"]}'
-    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["wine","wine_classfication","PARVUS","'$date'"]}'
-    # blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
+    # Data Upload
+    # file_upload public-data/Adult.csv
+    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["adult", "census_Income_classfication","Ronny Kohavi and Barry Becker","'$FILECONTENTS'","'$date'"]}'
+    # file_upload public-data/Bank.csv
+    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["bank","bank_classfication","S.Moro, P.Cotez and P.Rita","'$FILECONTENTS'","'$date'"]}'
+    # file_upload public-data/Breast-cancer-wisconsin.csv
+	# blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["breast-cancer-wisconsin","cancer_classfication","Olvi L. Mangasarian.","'$FILECONTENTS'","'$date'"]}'
+    file_upload public-data/Iris.csv
+    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$FILECONTENTS'","'$date'"]}'
+    blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
 
+    # file_upload public-data/Wine.csv
+    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["wine","wine_classfication","PARVUS","'$FILECONTENTS'","'$date'"]}'
+    # blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
+    # sleep 1s
     # # NOTE data is exist error
-    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$date'"]}'
+    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$FILECONTENTS'","'$date'"]}'
 
 
     # #################################################### ai-model chaincode ####################################################
