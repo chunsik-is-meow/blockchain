@@ -15,8 +15,8 @@ type DataChaincode struct {
 
 // DataType ...
 type DataType struct {
-	Type        string `json:"type"`
 	Name        string `json:"name"`
+	Type        string `json:"type"`
 	Description string `json:"description"`
 	Downloaded  int    `json:"downloaded"`
 	Owner       string `json:"owner"`
@@ -63,12 +63,12 @@ func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterfac
 		return fmt.Errorf("the data %s already exists", name)
 	}
 
-	down := 0
+	download := 0
 	data := DataType{
-		Type:        "data",
 		Name:        name,
+		Type:        "data",
 		Description: description,
-		Downloaded:  down,
+		Downloaded:  download,
 		Owner:       owner,
 		Contents:    contents,
 		Timestamp:   timestamp,
@@ -87,12 +87,12 @@ func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterfac
 }
 
 func (d *DataChaincode) GetAllCommonDataInfo(ctx contractapi.TransactionContextInterface) ([]*DataType, error) {
-	var dataInfos []*DataType
 	datasAsBytes, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {
 		return nil, err
 	}
 
+	var dataInfos []*DataType
 	for datasAsBytes.HasNext() {
 		queryResponse, err := datasAsBytes.Next()
 		if err != nil {
@@ -111,26 +111,47 @@ func (d *DataChaincode) GetAllCommonDataInfo(ctx contractapi.TransactionContextI
 }
 
 func (d *DataChaincode) GetCommonDataInfo(ctx contractapi.TransactionContextInterface, name string) (*DataType, error) {
-	dataInfo := &DataType{}
+	var dataInfo DataType
 	dataAsBytes, err := ctx.GetStub().GetState(makeDataKey(name))
 	if err != nil {
 		return nil, err
 	} else if dataAsBytes == nil {
-		dataInfo.Type = "empty"
 		dataInfo.Name = "empty"
+		dataInfo.Type = "empty"
 		dataInfo.Description = "empty"
 		dataInfo.Downloaded = 0
 		dataInfo.Owner = "empty"
 		dataInfo.Contents = "empty"
 		dataInfo.Timestamp = "empty"
 	} else {
-		err = json.Unmarshal(dataAsBytes, dataInfo)
+		err = json.Unmarshal(dataAsBytes, &dataInfo)
 		if err != nil {
 			return nil, err
 		}
 	}
+	return &dataInfo, nil
+}
 
-	return dataInfo, nil
+func (d *DataChaincode) GetCommonDataContents(ctx contractapi.TransactionContextInterface, name string) (string, error) {
+	var dataInfo DataType
+	dataAsBytes, err := ctx.GetStub().GetState(makeDataKey(name))
+	if err != nil {
+		return "not existed...", err
+	} else if dataAsBytes == nil {
+		dataInfo.Name = "empty"
+		dataInfo.Type = "empty"
+		dataInfo.Description = "empty"
+		dataInfo.Downloaded = 0
+		dataInfo.Owner = "empty"
+		dataInfo.Contents = "empty"
+		dataInfo.Timestamp = "empty"
+	} else {
+		err = json.Unmarshal(dataAsBytes, &dataInfo)
+		if err != nil {
+			return "failed...", err
+		}
+	}
+	return dataInfo.Contents, nil
 }
 
 func makeDataKey(key string) string {
@@ -142,7 +163,7 @@ func makeDataKey(key string) string {
 }
 
 func (d *DataChaincode) dataExists(ctx contractapi.TransactionContextInterface, name string) (bool, error) {
-	dataAsBytes, err := ctx.GetStub().GetState(name)
+	dataAsBytes, err := ctx.GetStub().GetState(makeDataKey(name))
 	if err != nil {
 		return false, fmt.Errorf("data is exist...: %v", err)
 	}

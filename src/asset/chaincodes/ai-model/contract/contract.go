@@ -22,14 +22,14 @@ type AIModelType struct {
 	Owner       string `json:"owner"`
 	Score       int    `json:"score"`
 	Description string `json:"description"`
+	Contents    string `json:"contents`
 	Timestamp   string `json:"timestamp"`
 }
 
 // InitLedger ...
 func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	aiModelInfos := []AIModelType{
-		{Type: "ai-model", Name: "adult_learning_model", Language: "python", Price: 2400, Owner: "AAA", Score: 75, Description: "adult_learning", Timestamp: "2021-08-27-09-11-49"},
-		{Type: "ai-model", Name: "cancer_learning_model", Language: "go", Price: 3100, Owner: "BBB", Score: 82, Description: "cancer_learning", Timestamp: "2021-08-27-09-11-49"},
+		{Type: "ai-model", Name: "test", Language: "test", Price: 0, Owner: "test", Score: 100, Description: "test", Contents: "test", Timestamp: "2021-08-27-09-11-49"},
 	}
 
 	isInitBytes, err := ctx.GetStub().GetState("isInit")
@@ -54,14 +54,7 @@ func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) er
 	}
 }
 
-// AIModelInsert ...
-func (a *AIChaincode) AIModelInsert(ctx contractapi.TransactionContextInterface, name string, description string, owner string, timestamp string) error {
-	// TODO
-	// aiModel file upload
-	return nil
-}
-
-func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, name string, language string, price int, owner string, description string, timestamp string) error {
+func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, name string, language string, price int, owner string, description string, contents string, timestamp string) error {
 	// a.AIModelInsert(ctx, name, description, owner, timestamp)
 	exists, err := a.aiModelExists(ctx, name)
 	if err != nil {
@@ -84,6 +77,7 @@ func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, na
 		Owner:       owner,
 		Score:       score,
 		Description: description,
+		Contents:    contents,
 		Timestamp:   timestamp,
 	}
 	aiModelAsBytes, err := json.Marshal(aiModel)
@@ -136,16 +130,39 @@ func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface
 		aiModelInfo.Owner = "empty"
 		aiModelInfo.Score = 0
 		aiModelInfo.Description = "empty"
-		aiModelInfo.Language = "empty"
+		aiModelInfo.Contents = "empty"
 		aiModelInfo.Timestamp = "empty"
 	} else {
-		err = json.Unmarshal(aiModelAsBytes, aiModelInfo)
+		err = json.Unmarshal(aiModelAsBytes, &aiModelInfo)
 		if err != nil {
 			return nil, err
 		}
 	}
-
 	return aiModelInfo, nil
+}
+
+func (a *AIChaincode) GetAIModelContents(ctx contractapi.TransactionContextInterface, name string) (string, error) {
+	var aiModelInfo AIModelType
+	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(name))
+	if err != nil {
+		return "not existed...", err
+	} else if aiModelAsBytes == nil {
+		aiModelInfo.Type = "ai-model"
+		aiModelInfo.Name = "empty"
+		aiModelInfo.Language = "empty"
+		aiModelInfo.Price = 0
+		aiModelInfo.Owner = "empty"
+		aiModelInfo.Score = 0
+		aiModelInfo.Description = "empty"
+		aiModelInfo.Contents = "empty"
+		aiModelInfo.Timestamp = "empty"
+	} else {
+		err = json.Unmarshal(aiModelAsBytes, &aiModelInfo)
+		if err != nil {
+			return "failed...", err
+		}
+	}
+	return aiModelInfo.Contents, nil
 }
 
 func makeAIModelKey(key string) string {
@@ -157,7 +174,7 @@ func makeAIModelKey(key string) string {
 }
 
 func (a *AIChaincode) aiModelExists(ctx contractapi.TransactionContextInterface, name string) (bool, error) {
-	aiModelAsBytes, err := ctx.GetStub().GetState(name)
+	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(name))
 	if err != nil {
 		return false, fmt.Errorf("ai-model is exist...: %v", err)
 	}

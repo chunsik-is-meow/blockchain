@@ -13,5 +13,9 @@ docker kill $(docker ps -a -q)
 docker system prune
 docker volume prune
 sudo chown -R (USERNAME) ./ 
+
 ## if the same error occur...
 in docker desktop: image clean up
+
+## upload file directory is upload/*
+## after API test, you can find downloaded files in download/* directory.

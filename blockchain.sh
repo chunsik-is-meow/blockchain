@@ -262,9 +262,8 @@ function blockchain_chaincode_init {
 }
 
 function blockchain_chaincode_invoke {
-    # peer=$1
-    # channel=$2
-    # chaincode=$3
+    # peer, channel=$1
+    # chaincode=$2
     peer=peer0.management.pusan.ac.kr
     channel=$1
     chaincode=$1
@@ -279,9 +278,8 @@ function blockchain_chaincode_invoke {
 }
 
 function blockchain_chaincode_query {
-    # peer=$1
-    # channel=$2
-    # chaincode=$3
+    # peer, channel=$1
+    # chaincode=$2
     peer=peer0.management.pusan.ac.kr
     channel=$1
     chaincode=$1
@@ -295,7 +293,6 @@ function blockchain_chaincode_query {
 }
 
 function blockchain_chaincode_upgrade {
-
     # TODO
     # rm -rf $bdir/asset/chaicnodes/${chaincodeName}
     # cp -rf $sdir/asset/chaicnodes/${chaincodeName} $bdir/asset/chaicnodes/${chaincodeName}
@@ -330,79 +327,109 @@ function blockchain_chaincode_upgrade {
 function file_upload {
     temp=$1
     contents=`cat $temp`
-    echo $contents | tr ' ' '^' > up.txt
+    echo $contents | tr ' ' '!' > up.txt
     FILECONTENTS=`cat up.txt`
+    rm up.txt
 }
+
 function file_download {
-    temp=$1
-    contents=`cat $temp`
-    echo $contents | tr '^' '\n' > down.txt
-    FILECONTENTS=`cat down.txt`
+    # peer, channel=$1
+    # downloaded file=$2
+    # chaincode=$3
+    peer=peer0.management.pusan.ac.kr
+    channel=$1
+    chaincode=$1
+    file=$2
+    
+    command "docker exec -it \
+    cli.$peer \
+    peer chaincode query  \
+    --channelID $channel \
+    --name $chaincode \
+    -c $3" > down.txt
+
+    contents=$(head -2 down.txt | tail -1)
+    if [ $channel = "data" ]; then
+        echo $contents | tr '!' '\n' 1> download/$channel/$file.csv
+    else
+        echo $contents | tr '!' '\n' 1> download/$channel/$file.h5
+    fi
+    rm down.txt
 }
 
 function blockchain_test {
-    for CHANNEL in ${CHANNELS[@]}
-    do
-        blockchain_chaincode_init $CHANNEL
-    done
     date=$(date '+%Y-%m-%d-%H-%M-%S')
     price=3100
-    #################################################### trade chaincode ####################################################
+    ################################################### trade chaincode ####################################################
 
-    # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
+    blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
+    blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
-    # # NOTE meow is lacking error
-    # blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
+    # NOTE meow is lacking error
+    blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
 
-    # blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
-    # sleep 2s
+    blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
+    sleep 2s
 
-    # # NOTE price mismatch error
-    # blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","300","'$date'"]}'
+    # NOTE price mismatch error
+    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","300","'$date'"]}'
 
-    # blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
+    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
 
-    # # NOTE already buy model
-    # blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
+    # NOTE already buy model
+    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
 
-    # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
+    blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
+    blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
-    # blockchain_chaincode_query trade '{"function":"GetQueryHistory","Args":["hyoeun"]}'
+    blockchain_chaincode_query trade '{"function":"GetQueryHistory","Args":["hyoeun"]}'
 
 
-    #################################################### data chaincode ####################################################
-    # blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
-
-    # Data Upload
-    # file_upload public-data/Adult.csv
-    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["adult", "census_Income_classfication","Ronny Kohavi and Barry Becker","'$FILECONTENTS'","'$date'"]}'
-    # file_upload public-data/Bank.csv
-    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["bank","bank_classfication","S.Moro, P.Cotez and P.Rita","'$FILECONTENTS'","'$date'"]}'
-    # file_upload public-data/Breast-cancer-wisconsin.csv
-	# blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["breast-cancer-wisconsin","cancer_classfication","Olvi L. Mangasarian.","'$FILECONTENTS'","'$date'"]}'
-    file_upload public-data/Iris.csv
-    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$FILECONTENTS'","'$date'"]}'
+    ################################################## data chaincode ####################################################
     blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
 
-    # file_upload public-data/Wine.csv
-    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["wine","wine_classfication","PARVUS","'$FILECONTENTS'","'$date'"]}'
-    # blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
-    # sleep 1s
-    # # NOTE data is exist error
-    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$FILECONTENTS'","'$date'"]}'
+    # file upload
+    file_upload upload/data/iris.csv
+    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$FILECONTENTS'","'$date'"]}'
+    file_upload upload/data/wine.csv
+    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["wine","wine_classfication","PARVUS","'$FILECONTENTS'","'$date'"]}'
+    file_upload upload/data/cancer.csv
+    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["cancer","cancer_classfication","L.Mangasarian.","'$FILECONTENTS'","'$date'"]}'
+
+    # get datainfo
+    blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
+
+    blockchain_chaincode_query data '{"function":"GetCommonDataInfo","Args":["iris"]}'
+
+    #file download
+    download_file="iris"
+    file_download data $download_file '{"function":"GetCommonDataContents","Args":["'$download_file'"]}'
+    download_file="wine"
+    file_download data $download_file '{"function":"GetCommonDataContents","Args":["'$download_file'"]}'
+    download_file="cancer"
+    file_download data $download_file '{"function":"GetCommonDataContents","Args":["'$download_file'"]}'
+
+    # NOTE data is exist error
+    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","aaaaa","'$date'"]}'
 
 
     # #################################################### ai-model chaincode ####################################################
-    # blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
+    
+    file_upload upload/ai-model/test_model.h5
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["test_model","Python","'$price'","CCC","test_input","'$FILECONTENTS'","'$date'"]}'
 
-    # blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris_learning_model","C","'$price'","CCC","iris_learning","'$date'"]}'
-    # blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["wine_learning_model","C","'$price'","DDD","wine_learning","'$date'"]}'
-    # blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
+    # get ai model info
+    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
 
-    # # NOTE ai-model is exist error
-    # blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["iris_learning_model","C","'$price'","CCC","iris_learning","'$date'"]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelInfo","Args":["test_model"]}'
+
+    # file download
+    download_file="test_model"
+    file_download ai-model $download_file '{"function":"GetAIModelContents","Args":["'$download_file'"]}'
+
+    # NOTE ai-model is exist error
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["test_model","C","'$price'","CCC","iris_learning","aaaaa","'$date'"]}'
 
     # # TODO
     # for CHANNEL in ${CHANNELS[@]}
