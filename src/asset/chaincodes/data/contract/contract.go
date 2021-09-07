@@ -24,6 +24,11 @@ type DataType struct {
 	Timestamp   string `json:"timestamp"`
 }
 
+type DataCount struct {
+	Type  string `json:"type"`
+	Count int    `json:"count"`
+}
+
 // InitLedger ...
 func (d *DataChaincode) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	dataInfos := []DataType{
@@ -40,7 +45,7 @@ func (d *DataChaincode) InitLedger(ctx contractapi.TransactionContextInterface) 
 				return fmt.Errorf("failed to json.Marshal(). %v", err)
 			}
 
-			dataKey := makeDataKey(data.Name)
+			dataKey := makeDataKey("admin", data.Name, "0.0")
 			ctx.GetStub().PutState(dataKey, dataAsBytes)
 			if err != nil {
 				return fmt.Errorf("failed to put to world state. %v", err)
@@ -54,8 +59,8 @@ func (d *DataChaincode) InitLedger(ctx contractapi.TransactionContextInterface) 
 }
 
 // DataInsert ...
-func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterface, name string, description string, owner string, contents string, timestamp string) error {
-	exists, err := d.dataExists(ctx, name)
+func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterface, username string, name string, version string, description string, owner string, contents string, timestamp string) error {
+	exists, err := d.dataExists(ctx, username, name, version)
 	if err != nil {
 		return err
 	}
@@ -77,7 +82,7 @@ func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterfac
 	if err != nil {
 		return fmt.Errorf("failed to json.Marshal(). %v", err)
 	}
-	dataKey := makeDataKey(name)
+	dataKey := makeDataKey(username, name, version)
 	ctx.GetStub().PutState(dataKey, dataAsBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put to world state. %v", err)
@@ -110,9 +115,9 @@ func (d *DataChaincode) GetAllCommonDataInfo(ctx contractapi.TransactionContextI
 	return dataInfos, nil
 }
 
-func (d *DataChaincode) GetCommonDataInfo(ctx contractapi.TransactionContextInterface, name string) (*DataType, error) {
+func (d *DataChaincode) GetCommonDataInfo(ctx contractapi.TransactionContextInterface, username string, name string, version string) (*DataType, error) {
 	var dataInfo DataType
-	dataAsBytes, err := ctx.GetStub().GetState(makeDataKey(name))
+	dataAsBytes, err := ctx.GetStub().GetState(makeDataKey(username, name, version))
 	if err != nil {
 		return nil, err
 	} else if dataAsBytes == nil {
@@ -132,9 +137,9 @@ func (d *DataChaincode) GetCommonDataInfo(ctx contractapi.TransactionContextInte
 	return &dataInfo, nil
 }
 
-func (d *DataChaincode) GetCommonDataContents(ctx contractapi.TransactionContextInterface, name string) (string, error) {
+func (d *DataChaincode) GetCommonDataContents(ctx contractapi.TransactionContextInterface, username string, name string, version string) (string, error) {
 	var dataInfo DataType
-	dataAsBytes, err := ctx.GetStub().GetState(makeDataKey(name))
+	dataAsBytes, err := ctx.GetStub().GetState(makeDataKey(username, name, version))
 	if err != nil {
 		return "not existed...", err
 	} else if dataAsBytes == nil {
@@ -154,16 +159,24 @@ func (d *DataChaincode) GetCommonDataContents(ctx contractapi.TransactionContext
 	return dataInfo.Contents, nil
 }
 
-func makeDataKey(key string) string {
+func GetAllDataCount(ctx contractapi.TransactionContextInterface) string {
+	return "aa"
+}
+
+func makeDataKey(username string, name string, version string) string {
 	var sb strings.Builder
 
 	sb.WriteString("D_")
-	sb.WriteString(key)
+	sb.WriteString(username)
+	sb.WriteString("_")
+	sb.WriteString(name)
+	sb.WriteString("_")
+	sb.WriteString(version)
 	return sb.String()
 }
 
-func (d *DataChaincode) dataExists(ctx contractapi.TransactionContextInterface, name string) (bool, error) {
-	dataAsBytes, err := ctx.GetStub().GetState(makeDataKey(name))
+func (d *DataChaincode) dataExists(ctx contractapi.TransactionContextInterface, username string, name string, version string) (bool, error) {
+	dataAsBytes, err := ctx.GetStub().GetState(makeDataKey(username, name, version))
 	if err != nil {
 		return false, fmt.Errorf("data is exist...: %v", err)
 	}

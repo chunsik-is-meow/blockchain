@@ -26,6 +26,11 @@ type AIModelType struct {
 	Timestamp   string `json:"timestamp"`
 }
 
+type DataCount struct {
+	Type  string `json:"type"`
+	Count int    `json:"count"`
+}
+
 // InitLedger ...
 func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	aiModelInfos := []AIModelType{
@@ -42,7 +47,7 @@ func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) er
 				return fmt.Errorf("failed to json.Marshal(). %v", err)
 			}
 
-			aiModelKey := makeAIModelKey(aiModel.Name)
+			aiModelKey := makeAIModelKey("admin", aiModel.Name, "0.0")
 			ctx.GetStub().PutState(aiModelKey, aiModelAsBytes)
 			if err != nil {
 				return fmt.Errorf("failed to put to world state. %v", err)
@@ -54,9 +59,9 @@ func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) er
 	}
 }
 
-func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, name string, language string, price int, owner string, description string, contents string, timestamp string) error {
+func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, username string, name string, version string, language string, price int, owner string, description string, contents string, timestamp string) error {
 	// a.AIModelInsert(ctx, name, description, owner, timestamp)
-	exists, err := a.aiModelExists(ctx, name)
+	exists, err := a.aiModelExists(ctx, username, name, version)
 	if err != nil {
 		return err
 	}
@@ -84,7 +89,7 @@ func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, na
 	if err != nil {
 		return fmt.Errorf("failed to json.Marshal(). %v", err)
 	}
-	aiModelKey := makeAIModelKey(name)
+	aiModelKey := makeAIModelKey(username, name, version)
 	ctx.GetStub().PutState(aiModelKey, aiModelAsBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put to world state. %v", err)
@@ -117,9 +122,9 @@ func (a *AIChaincode) GetAllAIModelInfo(ctx contractapi.TransactionContextInterf
 	return aiModelInfos, nil
 }
 
-func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface, name string) (*AIModelType, error) {
+func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface, username string, name string, version string) (*AIModelType, error) {
 	aiModelInfo := &AIModelType{}
-	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(name))
+	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(username, name, version))
 	if err != nil {
 		return nil, err
 	} else if aiModelAsBytes == nil {
@@ -141,9 +146,9 @@ func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface
 	return aiModelInfo, nil
 }
 
-func (a *AIChaincode) GetAIModelContents(ctx contractapi.TransactionContextInterface, name string) (string, error) {
+func (a *AIChaincode) GetAIModelContents(ctx contractapi.TransactionContextInterface, username string, name string, version string) (string, error) {
 	var aiModelInfo AIModelType
-	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(name))
+	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(username, name, version))
 	if err != nil {
 		return "not existed...", err
 	} else if aiModelAsBytes == nil {
@@ -165,16 +170,24 @@ func (a *AIChaincode) GetAIModelContents(ctx contractapi.TransactionContextInter
 	return aiModelInfo.Contents, nil
 }
 
-func makeAIModelKey(key string) string {
+func GetAllAIModelCount(ctx contractapi.TransactionContextInterface) string {
+	return "aa"
+}
+
+func makeAIModelKey(username string, name string, version string) string {
 	var sb strings.Builder
 
 	sb.WriteString("A_")
-	sb.WriteString(key)
+	sb.WriteString(username)
+	sb.WriteString("_")
+	sb.WriteString(name)
+	sb.WriteString("_")
+	sb.WriteString(version)
 	return sb.String()
 }
 
-func (a *AIChaincode) aiModelExists(ctx contractapi.TransactionContextInterface, name string) (bool, error) {
-	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(name))
+func (a *AIChaincode) aiModelExists(ctx contractapi.TransactionContextInterface, username string, name string, version string) (bool, error) {
+	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(username, name, version))
 	if err != nil {
 		return false, fmt.Errorf("ai-model is exist...: %v", err)
 	}

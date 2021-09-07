@@ -327,7 +327,7 @@ function blockchain_chaincode_upgrade {
 function file_upload {
     temp=$1
     contents=`cat $temp`
-    echo $contents | tr ' ' '!' > up.txt
+    echo $contents | tr ' ' '!' | tr '\0' '@' > up.txt
     FILECONTENTS=`cat up.txt`
     rm up.txt
 }
@@ -390,16 +390,16 @@ function blockchain_test {
 
     # file upload
     file_upload upload/data/iris.csv
-    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","'$FILECONTENTS'","'$date'"]}'
+    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","iris","1.0","iris_classfication","R.A.Fisher","'$FILECONTENTS'","'$date'"]}'
     file_upload upload/data/wine.csv
-    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["wine","wine_classfication","PARVUS","'$FILECONTENTS'","'$date'"]}'
+    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["hyoeun","wine","1.2","wine_classfication","PARVUS","'$FILECONTENTS'","'$date'"]}'
     file_upload upload/data/cancer.csv
-    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["cancer","cancer_classfication","L.Mangasarian.","'$FILECONTENTS'","'$date'"]}'
+    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","cancer","2.0","cancer_classfication","L.Mangasarian.","'$FILECONTENTS'","'$date'"]}'
 
     # get datainfo
     blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
 
-    blockchain_chaincode_query data '{"function":"GetCommonDataInfo","Args":["iris"]}'
+    blockchain_chaincode_query data '{"function":"GetCommonDataInfo","Args":["yohan","iris","1.0"]}'
 
     #file download
     download_file="iris"
@@ -410,26 +410,26 @@ function blockchain_test {
     file_download data $download_file '{"function":"GetCommonDataContents","Args":["'$download_file'"]}'
 
     # NOTE data is exist error
-    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["iris","iris_classfication","R.A.Fisher","aaaaa","'$date'"]}'
+    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","iris","1.0","iris_classfication","R.A.Fisher","aaaaa","'$date'"]}'
 
 
     # #################################################### ai-model chaincode ####################################################
     blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
     
     file_upload upload/ai-model/test_model.h5
-    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["test_model","Python","'$price'","CCC","test_input","'$FILECONTENTS'","'$date'"]}'
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["hyoeun","test_model","1.0","Python","'$price'","CCC","test_input","'$FILECONTENTS'","'$date'"]}'
 
     # get ai model info
     blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
 
-    blockchain_chaincode_query ai-model '{"function":"GetAIModelInfo","Args":["test_model"]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelInfo","Args":["hyoeun","test_model","1.0"]}'
 
     # file download
     download_file="test_model"
     file_download ai-model $download_file '{"function":"GetAIModelContents","Args":["'$download_file'"]}'
 
     # NOTE ai-model is exist error
-    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["test_model","C","'$price'","CCC","iris_learning","aaaaa","'$date'"]}'
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["hyoeun","test_model","1.0","C","'$price'","CCC","iris_learning","aaaaa","'$date'"]}'
 
     # # TODO
     # for CHANNEL in ${CHANNELS[@]}
