@@ -179,6 +179,10 @@ function blockchain_chaincode {
     done
 }
 
+function blockchain_upgrade {
+    blockchain_chaincode_upgrade $@
+}
+
 function blockchain_chaincode_approveformyorg {
     peer=$1
     channel=$2
@@ -293,13 +297,13 @@ function blockchain_chaincode_query {
 }
 
 function blockchain_chaincode_upgrade {
-    # TODO
-    # rm -rf $bdir/asset/chaicnodes/${chaincodeName}
-    # cp -rf $sdir/asset/chaicnodes/${chaincodeName} $bdir/asset/chaicnodes/${chaincodeName}
     CHANNEL=$1
     CHAINCODE_NAME=$1
     VERSION=$2
     SEQUENCE=$3
+
+    rm -rf $bdir/asset/chaicnodes/${CHAINCODE_NAME}
+    cp -rf $sdir/asset/chaicnodes/${CHAINCODE_NAME} $bdir/asset/chaicnodes/${CHAINCODE_NAME}
 
     blockchain_chaincode_package $CHAINCODE_NAME
     for PEER_NAME in ${PEERS[@]}
@@ -445,7 +449,7 @@ function blockchain_test {
 
 function main {
     case $1 in
-        all | clean | build | up | down | channel | chaincode | test)
+        all | clean | build | up | down | channel | chaincode | test | upgrade)
             cmd=blockchain_$1
             $cmd
             ;;

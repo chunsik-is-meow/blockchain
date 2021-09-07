@@ -18,9 +18,9 @@ type AIModelType struct {
 	Type        string `json:"type"`
 	Name        string `json:"name"`
 	Language    string `json:"language"`
-	Price       int    `json:"price"`
+	Price       uint32 `json:"price"`
 	Owner       string `json:"owner"`
-	Score       int    `json:"score"`
+	Score       uint32 `json:"score"`
 	Description string `json:"description"`
 	Contents    string `json:"contents`
 	Timestamp   string `json:"timestamp"`
@@ -148,6 +148,30 @@ func (a *AIChaincode) GetAllAIModelInfo(ctx contractapi.TransactionContextInterf
 func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface, username string, name string, version string) (*AIModelType, error) {
 	aiModelInfo := &AIModelType{}
 	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(username, name, version))
+	if err != nil {
+		return nil, err
+	} else if aiModelAsBytes == nil {
+		aiModelInfo.Type = "empty"
+		aiModelInfo.Name = "empty"
+		aiModelInfo.Language = "empty"
+		aiModelInfo.Price = 0
+		aiModelInfo.Owner = "empty"
+		aiModelInfo.Score = 0
+		aiModelInfo.Description = "empty"
+		aiModelInfo.Contents = "empty"
+		aiModelInfo.Timestamp = "empty"
+	} else {
+		err = json.Unmarshal(aiModelAsBytes, &aiModelInfo)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return aiModelInfo, nil
+}
+
+func (a *AIChaincode) GetAIModelInfoWithKey(ctx contractapi.TransactionContextInterface, modelKey string) (*AIModelType, error) {
+	aiModelInfo := &AIModelType{}
+	aiModelAsBytes, err := ctx.GetStub().GetState(modelKey)
 	if err != nil {
 		return nil, err
 	} else if aiModelAsBytes == nil {

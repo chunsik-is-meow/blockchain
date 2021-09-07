@@ -54,6 +54,19 @@ type Model struct {
 	Price            uint32      `json:"price"`
 }
 
+// AIModelType ...
+type AIModelType struct {
+	Type        string `json:"type"`
+	Name        string `json:"name"`
+	Language    string `json:"language"`
+	Price       uint32 `json:"price"`
+	Owner       string `json:"owner"`
+	Score       uint32 `json:"score"`
+	Description string `json:"description"`
+	Contents    string `json:"contents`
+	Timestamp   string `json:"timestamp"`
+}
+
 // InitLedger ...
 func (t *TradeChaincode) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	isInitBytes, err := ctx.GetStub().GetState("isInit")
@@ -165,6 +178,18 @@ func (t *TradeChaincode) Transfer(ctx contractapi.TransactionContextInterface, f
 	return nil
 }
 
+// GetModel ...
+func (t *TradeChaincode) GetModel(ctx contractapi.TransactionContextInterface, uid string, modelKey string, timestamp string) (*AIModelType, error) {
+	args := ["GetAIModelInfoWithKey", modelKey];
+	result, err := ctx.GetStub().invokeChaincode("ai-model", args, "ai-model");
+	if err != nil {
+		return fmt.Errorf("failed to get AiModel. %v", err)
+	}
+	aiModel := json.parse(result.payload.toString("utf8"));
+
+	return aiModel, nil
+}
+
 // BuyModel ...
 func (t *TradeChaincode) BuyModel(ctx contractapi.TransactionContextInterface, uid string, modelKey string, price uint32, timestamp string) error {
 	checkBuyAIModelAsBytes, err := ctx.GetStub().GetState(makeBuyAIModelKey(uid, modelKey))
@@ -183,7 +208,7 @@ func (t *TradeChaincode) BuyModel(ctx contractapi.TransactionContextInterface, u
 	// 	result
 	//  price
 	// }
-
+	
 	model := Model{
 		VerificationOrgs: []string{"verification-01"},
 		Result: ModelResult{
