@@ -56,15 +56,22 @@ function blockchain_channel_join {
 }
 
 function blockchain_chaincode_package {
+    CHAINCODE_NAME=$1
+    VERSION=$2
+
     command "docker exec -it \
     cli.peer0.management.pusan.ac.kr \
-    peer lifecycle chaincode package $CHAINCODE_DIR/$1-$VERSION.tar.gz --path $CHAINCODE_DIR/$1 --lang golang --label $1-$VERSION"
+    peer lifecycle chaincode package $CHAINCODE_DIR/$CHAINCODE_NAME-$VERSION.tar.gz --path $CHAINCODE_DIR/$CHAINCODE_NAME --lang golang --label $CHAINCODE_NAME-$VERSION"
 }
 
 function blockchain_chaincode_install {
+    PEER_NAME=$1
+    CHAINCODE_NAME=$2
+    VERSION=$3
+
     command "docker exec -it \
-    cli.$1 \
-    peer lifecycle chaincode install $CHAINCODE_DIR/$2-$VERSION.tar.gz"
+    cli.$PEER_NAME \
+    peer lifecycle chaincode install $CHAINCODE_DIR/$CHAINCODE_NAME-$VERSION.tar.gz"
 }
 
 function blockchain_chaincode_getpackageid {
@@ -143,16 +150,18 @@ function blockchain_channel {
 }
 
 function blockchain_chaincode {
+    VERSION=1.0
+
     for CHAINCODE_NAME in ${CHAINCODES[@]}
     do
-        blockchain_chaincode_package $CHAINCODE_NAME
+        blockchain_chaincode_package $CHAINCODE_NAME $VERSION
         for PEER_NAME in ${PEERS[@]}
         do
             if [[ $PEER_NAME == 'peer0.trader.pusan.ac.kr' && $CHAINCODE_NAME == 'ai-model' ]]
             then
                 continue
             fi
-                blockchain_chaincode_install $PEER_NAME $CHAINCODE_NAME
+                blockchain_chaincode_install $PEER_NAME $CHAINCODE_NAME $VERSION
         done
     done
 
@@ -302,17 +311,17 @@ function blockchain_chaincode_upgrade {
     VERSION=$2
     SEQUENCE=$3
 
-    rm -rf $bdir/asset/chaicnodes/${CHAINCODE_NAME}
-    cp -rf $sdir/asset/chaicnodes/${CHAINCODE_NAME} $bdir/asset/chaicnodes/${CHAINCODE_NAME}
+    command "rm -rf $bdir/asset/chaincodes/${CHAINCODE_NAME}"
+    command "cp -rf $sdir/asset/chaincodes/${CHAINCODE_NAME} $bdir/asset/chaincodes/${CHAINCODE_NAME}"
 
-    blockchain_chaincode_package $CHAINCODE_NAME
+    blockchain_chaincode_package $CHAINCODE_NAME $VERSION
     for PEER_NAME in ${PEERS[@]}
     do
         if [[ $PEER_NAME == 'peer0.trader.pusan.ac.kr' && $CHAINCODE_NAME == 'ai-model' ]]
         then
             continue
         fi
-        blockchain_chaincode_install $PEER_NAME $CHAINCODE_NAME
+        blockchain_chaincode_install $PEER_NAME $CHAINCODE_NAME $VERSION
     done
 
     for PEER_NAME in ${PEERS[@]}
@@ -451,7 +460,8 @@ function main {
     case $1 in
         all | clean | build | up | down | channel | chaincode | test | upgrade)
             cmd=blockchain_$1
-            $cmd
+            shift
+            $cmd $@
             ;;
         *)
             bockchain_usage
