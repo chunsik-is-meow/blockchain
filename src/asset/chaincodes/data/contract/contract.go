@@ -39,6 +39,19 @@ func (d *DataChaincode) InitLedger(ctx contractapi.TransactionContextInterface) 
 	if err != nil {
 		return fmt.Errorf("failed GetState('isInit')")
 	} else if isInitBytes == nil {
+		initCount := DataCount{
+			Type:  "DataCount",
+			Count: 0,
+		}
+		initMeowAsBytes, err := json.Marshal(initCount)
+		ctx.GetStub().PutState(makeDataCountKey("DC"), initMeowAsBytes)
+		if err != nil {
+			return fmt.Errorf("failed to put to world state. %v", err)
+		}
+		if err != nil {
+			return fmt.Errorf("failed to json.Marshal(). %v", err)
+		}
+
 		for _, data := range dataInfos {
 			dataAsBytes, err := json.Marshal(data)
 			if err != nil {
@@ -88,6 +101,17 @@ func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterfac
 		return fmt.Errorf("failed to put to world state. %v", err)
 	}
 
+	currentDataCount, err := d.GetAllDataCount(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get current meow. %v", err)
+	}
+	currentDataCount.Count++
+
+	currentDataCountAsBytes, err := json.Marshal(currentDataCount)
+	if err != nil {
+		return fmt.Errorf("failed to json.Marshal(). %v", err)
+	}
+	ctx.GetStub().PutState(makeDataCountKey("DC"), currentDataCountAsBytes)
 	return nil
 }
 
@@ -159,8 +183,30 @@ func (d *DataChaincode) GetCommonDataContents(ctx contractapi.TransactionContext
 	return dataInfo.Contents, nil
 }
 
-func GetAllDataCount(ctx contractapi.TransactionContextInterface) string {
-	return "aa"
+func (d *DataChaincode) GetAllDataCount(ctx contractapi.TransactionContextInterface) (*DataCount, error) {
+	currentDataCount := &DataCount{}
+	currentDataCountAsBytes, err := ctx.GetStub().GetState(makeDataCountKey("DC"))
+	if err != nil {
+		return nil, err
+	} else if currentDataCountAsBytes == nil {
+		currentDataCount.Type = "CurrentMeowAmount"
+		currentDataCount.Count = 0
+	} else {
+		err = json.Unmarshal(currentDataCountAsBytes, currentDataCount)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return currentDataCount, nil
+}
+
+func makeDataCountKey(key string) string {
+	var sb strings.Builder
+
+	sb.WriteString("Count_D_")
+	sb.WriteString(key)
+	return sb.String()
 }
 
 func makeDataKey(username string, name string, version string) string {

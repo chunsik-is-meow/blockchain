@@ -26,7 +26,7 @@ type AIModelType struct {
 	Timestamp   string `json:"timestamp"`
 }
 
-type DataCount struct {
+type AIModelCount struct {
 	Type  string `json:"type"`
 	Count int    `json:"count"`
 }
@@ -41,6 +41,19 @@ func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) er
 	if err != nil {
 		return fmt.Errorf("failed GetState('isInit')")
 	} else if isInitBytes == nil {
+		initCount := AIModelCount{
+			Type:  "AIModelCount",
+			Count: 0,
+		}
+		initMeowAsBytes, err := json.Marshal(initCount)
+		ctx.GetStub().PutState(makeAIModelCountKey("AC"), initMeowAsBytes)
+		if err != nil {
+			return fmt.Errorf("failed to put to world state. %v", err)
+		}
+		if err != nil {
+			return fmt.Errorf("failed to json.Marshal(). %v", err)
+		}
+
 		for _, aiModel := range aiModelInfos {
 			aiModelAsBytes, err := json.Marshal(aiModel)
 			if err != nil {
@@ -94,7 +107,17 @@ func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, us
 	if err != nil {
 		return fmt.Errorf("failed to put to world state. %v", err)
 	}
+	currentAIModelCount, err := a.GetAllAIModelCount(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get current meow. %v", err)
+	}
+	currentAIModelCount.Count++
 
+	currentAIModelCountAsBytes, err := json.Marshal(currentAIModelCount)
+	if err != nil {
+		return fmt.Errorf("failed to json.Marshal(). %v", err)
+	}
+	ctx.GetStub().PutState(makeAIModelCountKey("AC"), currentAIModelCountAsBytes)
 	return nil
 }
 
@@ -170,8 +193,30 @@ func (a *AIChaincode) GetAIModelContents(ctx contractapi.TransactionContextInter
 	return aiModelInfo.Contents, nil
 }
 
-func GetAllAIModelCount(ctx contractapi.TransactionContextInterface) string {
-	return "aa"
+func (a *AIChaincode) GetAllAIModelCount(ctx contractapi.TransactionContextInterface) (*AIModelCount, error) {
+	currentAIModelCount := &AIModelCount{}
+	currentAIModelCountAsBytes, err := ctx.GetStub().GetState(makeAIModelCountKey("AC"))
+	if err != nil {
+		return nil, err
+	} else if currentAIModelCountAsBytes == nil {
+		currentAIModelCount.Type = "CurrentMeowAmount"
+		currentAIModelCount.Count = 0
+	} else {
+		err = json.Unmarshal(currentAIModelCountAsBytes, currentAIModelCount)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return currentAIModelCount, nil
+}
+
+func makeAIModelCountKey(key string) string {
+	var sb strings.Builder
+
+	sb.WriteString("Count_D_")
+	sb.WriteString(key)
+	return sb.String()
 }
 
 func makeAIModelKey(username string, name string, version string) string {
