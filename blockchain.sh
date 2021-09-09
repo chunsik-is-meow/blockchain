@@ -325,9 +325,15 @@ function blockchain_chaincode_upgrade {
 }
 
 function file_upload {
-    temp=$1
-    contents=`cat $temp`
-    echo $contents | tr ' ' '!' | tr '\0' '@' > up.txt
+    channel=$1
+    temp=$2
+    if [ $channel = "data" ]; then
+        contents=`cat $temp`
+        echo $contents | tr ' ' '!' > up.txt
+    else
+        contents=`hexdump -v -e '/1 "%02X!"' $temp`
+        echo $contents > up.txt
+    fi
     FILECONTENTS=`cat up.txt`
     rm up.txt
 }
@@ -352,7 +358,8 @@ function file_download {
     if [ $channel = "data" ]; then
         echo $contents | tr '!' '\n' 1> download/$channel/$file.csv
     else
-        echo $contents | tr '!' '\n' 1> download/$channel/$file.h5
+        down=`echo $contents | tr -d '!'`
+        echo -n $down | xxd -r -p  1> download/$channel/$file.h5
     fi
     rm down.txt
 }
@@ -360,6 +367,12 @@ function file_download {
 function blockchain_test {
     date=$(date '+%Y-%m-%d-%H-%M-%S')
     price=3100
+
+    file_upload ai-model upload/ai-model/test_model.h5
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["hyoeun","test_model","1.0","Python","'$price'","CCC","test_input","'$FILECONTENTS'","'$date'"]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
+    binary_file_download ai-model test_model
+    
     ################################################### trade chaincode ####################################################
 
     blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
@@ -384,16 +397,15 @@ function blockchain_test {
 
     blockchain_chaincode_query trade '{"function":"GetQueryHistory","Args":["hyoeun"]}'
 
-
     ################################################## data chaincode ####################################################
     blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
     blockchain_chaincode_query data '{"function":"GetAllDataCount","Args":[]}'
     # file upload
-    file_upload upload/data/iris.csv
+    file_upload data upload/data/iris.csv
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","iris","1.0","iris_classfication","R.A.Fisher","'$FILECONTENTS'","'$date'"]}'
-    file_upload upload/data/wine.csv
+    file_upload data upload/data/wine.csv
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["hyoeun","wine","1.2","wine_classfication","PARVUS","'$FILECONTENTS'","'$date'"]}'
-    file_upload upload/data/cancer.csv
+    file_upload data upload/data/cancer.csv
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","cancer","2.0","cancer_classfication","L.Mangasarian.","'$FILECONTENTS'","'$date'"]}'
 
     # get datainfo
@@ -415,11 +427,11 @@ function blockchain_test {
     blockchain_chaincode_query data '{"function":"GetAllDataCount","Args":[]}'
 
 
-    # #################################################### ai-model chaincode ####################################################
+    #################################################### ai-model chaincode ####################################################
     blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
     blockchain_chaincode_query ai-model '{"function":"GetAllAIModelCount","Args":[]}'
     
-    file_upload upload/ai-model/test_model.h5
+    file_upload ai-model upload/ai-model/test_model.h5
     blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["hyoeun","test_model","1.0","Python","'$price'","CCC","test_input","'$FILECONTENTS'","'$date'"]}'
 
     # get ai model info
