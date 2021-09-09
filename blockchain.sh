@@ -151,6 +151,7 @@ function blockchain_channel {
 
 function blockchain_chaincode {
     VERSION=1.0
+    SEQUENCE=1
 
     for CHAINCODE_NAME in ${CHAINCODES[@]}
     do
@@ -174,11 +175,11 @@ function blockchain_chaincode {
             then
                 continue
             fi
-                blockchain_chaincode_approveformyorg $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION 1
+                blockchain_chaincode_approveformyorg $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
                 sleep 1s
-                blockchain_chaincode_checkcommitreadiness $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION 1
+                blockchain_chaincode_checkcommitreadiness $PEER_NAME $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
         done
-        blockchain_chaincode_commit 'peer0.management.pusan.ac.kr' $CHANNEL $CHAINCODE_NAME $VERSION 1
+        blockchain_chaincode_commit 'peer0.management.pusan.ac.kr' $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
         blockchain_chaincode_querycommitted 'peer0.management.pusan.ac.kr' $CHANNEL
     done
 
@@ -190,6 +191,10 @@ function blockchain_chaincode {
 
 function blockchain_upgrade {
     blockchain_chaincode_upgrade $@
+}
+
+function blockchain_test {
+    blockchain_test_$1
 }
 
 function blockchain_chaincode_approveformyorg {
@@ -370,7 +375,7 @@ function file_download {
     rm down.txt
 }
 
-function blockchain_test {
+function blockchain_test_trade {
     date=$(date '+%Y-%m-%d-%H-%M-%S')
     price=3100
     ################################################### trade chaincode ####################################################
@@ -397,7 +402,13 @@ function blockchain_test {
 
     blockchain_chaincode_query trade '{"function":"GetQueryHistory","Args":["hyoeun"]}'
 
+    # blockchain_chaincode_invoke trade '{"function":"GetModel","Args":["A_hyoeun_test_model_1.0"]}'
+}
 
+function blockchain_test_data {
+    date=$(date '+%Y-%m-%d-%H-%M-%S')
+    price=3100
+   
     ################################################## data chaincode ####################################################
     blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
     blockchain_chaincode_query data '{"function":"GetAllDataCount","Args":[]}'
@@ -408,6 +419,7 @@ function blockchain_test {
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["hyoeun","wine","1.2","wine_classfication","PARVUS","'$FILECONTENTS'","'$date'"]}'
     file_upload upload/data/cancer.csv
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","cancer","2.0","cancer_classfication","L.Mangasarian.","'$FILECONTENTS'","'$date'"]}'
+    sleep 2s
 
     # get datainfo
     blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
@@ -426,8 +438,12 @@ function blockchain_test {
     # NOTE data is exist error
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","iris","1.0","iris_classfication","R.A.Fisher","aaaaa","'$date'"]}'
     blockchain_chaincode_query data '{"function":"GetAllDataCount","Args":[]}'
+}
 
-
+function blockchain_test_ai {
+    date=$(date '+%Y-%m-%d-%H-%M-%S')
+    price=3100
+   
     # #################################################### ai-model chaincode ####################################################
     blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
     blockchain_chaincode_query ai-model '{"function":"GetAllAIModelCount","Args":[]}'
@@ -448,13 +464,8 @@ function blockchain_test {
     # NOTE ai-model is exist error
     blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["hyoeun","test_model","1.0","C","'$price'","CCC","iris_learning","aaaaa","'$date'"]}'
     blockchain_chaincode_query ai-model '{"function":"GetAllAIModelCount","Args":[]}'
-
-    # # TODO
-    # for CHANNEL in ${CHANNELS[@]}
-    # do
-    #     blockchain_chaincode_upgrade $CHANNEL 4.0 4
-    # done
 }
+
 
 function main {
     case $1 in

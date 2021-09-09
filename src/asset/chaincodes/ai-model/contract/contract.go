@@ -72,7 +72,7 @@ func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) er
 	}
 }
 
-func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, username string, name string, version string, language string, price int, owner string, description string, contents string, timestamp string) error {
+func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, username string, name string, version string, language string, price uint32, owner string, description string, contents string, timestamp string) error {
 	// a.AIModelInsert(ctx, name, description, owner, timestamp)
 	exists, err := a.aiModelExists(ctx, username, name, version)
 	if err != nil {
@@ -170,20 +170,14 @@ func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface
 }
 
 func (a *AIChaincode) GetAIModelInfoWithKey(ctx contractapi.TransactionContextInterface, modelKey string) (*AIModelType, error) {
+	fmt.Println(modelKey)
 	aiModelInfo := &AIModelType{}
 	aiModelAsBytes, err := ctx.GetStub().GetState(modelKey)
 	if err != nil {
 		return nil, err
 	} else if aiModelAsBytes == nil {
-		aiModelInfo.Type = "empty"
-		aiModelInfo.Name = "empty"
-		aiModelInfo.Language = "empty"
 		aiModelInfo.Price = 0
-		aiModelInfo.Owner = "empty"
 		aiModelInfo.Score = 0
-		aiModelInfo.Description = "empty"
-		aiModelInfo.Contents = "empty"
-		aiModelInfo.Timestamp = "empty"
 	} else {
 		err = json.Unmarshal(aiModelAsBytes, &aiModelInfo)
 		if err != nil {
@@ -269,9 +263,9 @@ func (a *AIChaincode) GetQueryAIModelHistory(ctx contractapi.TransactionContextI
 	return getQueryResultForQueryString(ctx, queryString)
 }
 
-func evaluateScore(ctx contractapi.TransactionContextInterface, aiModel string) (int, error) {
-	// TODO
-	score := 81
+func evaluateScore(ctx contractapi.TransactionContextInterface, aiModel string) (uint32, error) {
+	var score uint32
+	score = 81
 	return score, nil
 }
 
