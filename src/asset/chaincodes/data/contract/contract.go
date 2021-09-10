@@ -26,45 +26,29 @@ type DataType struct {
 
 type DataCount struct {
 	Type  string `json:"type"`
+	List  string `json:"list"`
 	Count int    `json:"count"`
 }
 
 // InitLedger ...
 func (d *DataChaincode) InitLedger(ctx contractapi.TransactionContextInterface) error {
-	dataInfos := []DataType{
-		{Type: "data", Name: "test", Description: "test", Downloaded: 0, Owner: "test", Contents: "test", Timestamp: "2021-08-27-09-11-49"},
-	}
-
 	isInitBytes, err := ctx.GetStub().GetState("isInit")
 	if err != nil {
 		return fmt.Errorf("failed GetState('isInit')")
 	} else if isInitBytes == nil {
 		initCount := DataCount{
 			Type:  "DataCount",
+			List:  "",
 			Count: 0,
 		}
-		initMeowAsBytes, err := json.Marshal(initCount)
-		ctx.GetStub().PutState(makeDataCountKey("DC"), initMeowAsBytes)
+		initDataCountAsBytes, err := json.Marshal(initCount)
+		ctx.GetStub().PutState(makeDataCountKey("DC"), initDataCountAsBytes)
 		if err != nil {
 			return fmt.Errorf("failed to put to world state. %v", err)
 		}
 		if err != nil {
 			return fmt.Errorf("failed to json.Marshal(). %v", err)
 		}
-
-		for _, data := range dataInfos {
-			dataAsBytes, err := json.Marshal(data)
-			if err != nil {
-				return fmt.Errorf("failed to json.Marshal(). %v", err)
-			}
-
-			dataKey := makeDataKey("admin", data.Name, "0.0")
-			ctx.GetStub().PutState(dataKey, dataAsBytes)
-			if err != nil {
-				return fmt.Errorf("failed to put to world state. %v", err)
-			}
-		}
-
 		return nil
 	} else {
 		return fmt.Errorf("already initialized")
@@ -72,8 +56,8 @@ func (d *DataChaincode) InitLedger(ctx contractapi.TransactionContextInterface) 
 }
 
 // DataInsert ...
-func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterface, username string, name string, version string, description string, owner string, contents string, timestamp string) error {
-	exists, err := d.dataExists(ctx, username, name, version)
+func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterface, uploader string, name string, version string, description string, owner string, contents string, timestamp string) error {
+	exists, err := d.dataExists(ctx, uploader, name, version)
 	if err != nil {
 		return err
 	}
@@ -82,7 +66,7 @@ func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterfac
 	}
 
 	download := 0
-	data := DataType{
+	dataInfo := DataType{
 		Name:        name,
 		Type:        "data",
 		Description: description,
@@ -91,17 +75,17 @@ func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterfac
 		Contents:    contents,
 		Timestamp:   timestamp,
 	}
-	dataAsBytes, err := json.Marshal(data)
+	dataAsBytes, err := json.Marshal(dataInfo)
 	if err != nil {
 		return fmt.Errorf("failed to json.Marshal(). %v", err)
 	}
-	dataKey := makeDataKey(username, name, version)
+	dataKey := makeDataKey(uploader, name, version)
 	ctx.GetStub().PutState(dataKey, dataAsBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put to world state. %v", err)
 	}
 
-	currentDataCount, err := d.GetAllDataCount(ctx)
+	currentDataCount, err := d.GetCommonDataCount(ctx, "DC")
 	if err != nil {
 		return fmt.Errorf("failed to get current meow. %v", err)
 	}
@@ -115,92 +99,6 @@ func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterfac
 	return nil
 }
 
-func (d *DataChaincode) GetAllCommonDataInfo(ctx contractapi.TransactionContextInterface) ([]*DataType, error) {
-	datasAsBytes, err := ctx.GetStub().GetStateByRange("", "")
-	if err != nil {
-		return nil, err
-	}
-
-	var dataInfos []*DataType
-	for datasAsBytes.HasNext() {
-		queryResponse, err := datasAsBytes.Next()
-		if err != nil {
-			return nil, err
-		}
-
-		var data DataType
-		err = json.Unmarshal(queryResponse.Value, &data)
-		if err != nil {
-			return nil, err
-		}
-		dataInfos = append(dataInfos, &data)
-	}
-
-	return dataInfos, nil
-}
-
-func (d *DataChaincode) GetCommonDataInfo(ctx contractapi.TransactionContextInterface, username string, name string, version string) (*DataType, error) {
-	var dataInfo DataType
-	dataAsBytes, err := ctx.GetStub().GetState(makeDataKey(username, name, version))
-	if err != nil {
-		return nil, err
-	} else if dataAsBytes == nil {
-		dataInfo.Name = "empty"
-		dataInfo.Type = "empty"
-		dataInfo.Description = "empty"
-		dataInfo.Downloaded = 0
-		dataInfo.Owner = "empty"
-		dataInfo.Contents = "empty"
-		dataInfo.Timestamp = "empty"
-	} else {
-		err = json.Unmarshal(dataAsBytes, &dataInfo)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return &dataInfo, nil
-}
-
-func (d *DataChaincode) GetCommonDataContents(ctx contractapi.TransactionContextInterface, username string, name string, version string) (string, error) {
-	var dataInfo DataType
-	dataAsBytes, err := ctx.GetStub().GetState(makeDataKey(username, name, version))
-	if err != nil {
-		return "not existed...", err
-	} else if dataAsBytes == nil {
-		dataInfo.Name = "empty"
-		dataInfo.Type = "empty"
-		dataInfo.Description = "empty"
-		dataInfo.Downloaded = 0
-		dataInfo.Owner = "empty"
-		dataInfo.Contents = "empty"
-		dataInfo.Timestamp = "empty"
-	} else {
-		err = json.Unmarshal(dataAsBytes, &dataInfo)
-		if err != nil {
-			return "failed...", err
-		}
-	}
-	return dataInfo.Contents, nil
-}
-
-func (d *DataChaincode) GetAllDataCount(ctx contractapi.TransactionContextInterface) (*DataCount, error) {
-	currentDataCount := &DataCount{}
-	currentDataCountAsBytes, err := ctx.GetStub().GetState(makeDataCountKey("DC"))
-	if err != nil {
-		return nil, err
-	} else if currentDataCountAsBytes == nil {
-		currentDataCount.Type = "CurrentMeowAmount"
-		currentDataCount.Count = 0
-	} else {
-		err = json.Unmarshal(currentDataCountAsBytes, currentDataCount)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return currentDataCount, nil
-}
-
 func makeDataCountKey(key string) string {
 	var sb strings.Builder
 
@@ -209,11 +107,11 @@ func makeDataCountKey(key string) string {
 	return sb.String()
 }
 
-func makeDataKey(username string, name string, version string) string {
+func makeDataKey(uploader string, name string, version string) string {
 	var sb strings.Builder
 
 	sb.WriteString("D_")
-	sb.WriteString(username)
+	sb.WriteString(uploader)
 	sb.WriteString("_")
 	sb.WriteString(name)
 	sb.WriteString("_")
@@ -221,8 +119,8 @@ func makeDataKey(username string, name string, version string) string {
 	return sb.String()
 }
 
-func (d *DataChaincode) dataExists(ctx contractapi.TransactionContextInterface, username string, name string, version string) (bool, error) {
-	dataAsBytes, err := ctx.GetStub().GetState(makeDataKey(username, name, version))
+func (d *DataChaincode) dataExists(ctx contractapi.TransactionContextInterface, uploader string, name string, version string) (bool, error) {
+	dataAsBytes, err := ctx.GetStub().GetState(makeDataKey(uploader, name, version))
 	if err != nil {
 		return false, fmt.Errorf("data is exist...: %v", err)
 	}
@@ -230,9 +128,81 @@ func (d *DataChaincode) dataExists(ctx contractapi.TransactionContextInterface, 
 	return dataAsBytes != nil, nil
 }
 
-func (d *DataChaincode) GetQueryDataHistory(ctx contractapi.TransactionContextInterface) ([]*DataType, error) {
+func (d *DataChaincode) GetAllCommonDataInfo(ctx contractapi.TransactionContextInterface) ([]*DataType, error) {
 	queryString := fmt.Sprintf(`{"selector":{"type":"data"}}`)
 	return getQueryResultForQueryString(ctx, queryString)
+}
+
+func (d *DataChaincode) GetCommonDataInfo(ctx contractapi.TransactionContextInterface, uploader string, name string, version string) (*DataType, error) {
+	dataInfo := &DataType{}
+	dataAsBytes, err := ctx.GetStub().GetState(makeDataKey(uploader, name, version))
+	if err != nil {
+		return nil, err
+	} else if dataAsBytes == nil {
+		dataInfo.Name = "empty"
+		dataInfo.Type = "empty"
+		dataInfo.Description = "empty"
+		dataInfo.Downloaded = 0
+		dataInfo.Owner = "empty"
+		dataInfo.Contents = "empty"
+		dataInfo.Timestamp = "empty"
+	} else {
+		err = json.Unmarshal(dataAsBytes, &dataInfo)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return dataInfo, nil
+}
+
+func (d *DataChaincode) GetCommonDataContents(ctx contractapi.TransactionContextInterface, uploader string, name string, version string, downloader string) (string, error) {
+	dataInfo, err := d.GetCommonDataInfo(ctx, uploader, name, version)
+	if err != nil {
+		return "failed to get Info", err
+	}
+	dataInfo.Downloaded++
+	dataAsBytes, err := json.Marshal(dataInfo)
+	if err != nil {
+		return "failed to json.Marshal().", err
+	}
+	dataKey := makeDataKey(uploader, name, version)
+	ctx.GetStub().PutState(dataKey, dataAsBytes)
+	if err != nil {
+		return "failed to put to world state.", err
+	}
+
+	currentDataCount, err := d.GetCommonDataCount(ctx, downloader)
+	if err != nil {
+		return "failed to get count", err
+	}
+	currentDataCount.Count++
+	currentDataCount.List += "/" + name
+
+	currentDataCountAsBytes, err := json.Marshal(currentDataCount)
+	if err != nil {
+		return "failed to json.Marshal()", err
+	}
+	ctx.GetStub().PutState(makeDataCountKey(downloader), currentDataCountAsBytes)
+
+	return dataInfo.Contents, nil
+}
+
+func (d *DataChaincode) GetCommonDataCount(ctx contractapi.TransactionContextInterface, key string) (*DataCount, error) {
+	currentDataCount := &DataCount{}
+	currentDataCountAsBytes, err := ctx.GetStub().GetState(makeDataCountKey(key))
+	if err != nil {
+		return nil, err
+	} else if currentDataCountAsBytes == nil {
+		currentDataCount.Type = "DataCount"
+		currentDataCount.List = ""
+		currentDataCount.Count = 0
+	} else {
+		err = json.Unmarshal(currentDataCountAsBytes, currentDataCount)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return currentDataCount, nil
 }
 
 func getQueryResultForQueryString(ctx contractapi.TransactionContextInterface, queryString string) ([]*DataType, error) {
