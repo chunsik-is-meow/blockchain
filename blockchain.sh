@@ -349,10 +349,11 @@ function file_download {
     
     command "docker exec -it \
     cli.$peer \
-    peer chaincode query  \
+    peer chaincode invoke  \
     --channelID $channel \
     --name $chaincode \
-    -c $3" > down.txt
+    -c $3 \
+    $GLOBAL_FLAGS" > down.txt
 
     contents=$(head -2 down.txt | tail -1)
     if [ $channel = "data" ]; then
@@ -429,24 +430,30 @@ function blockchain_test {
 
     #################################################### ai-model chaincode ####################################################
     blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
-    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelCount","Args":[]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["AC"]}'
     
     file_upload ai-model upload/ai-model/test_model.h5
     blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["hyoeun","test_model","1.0","Python","'$price'","CCC","test_input","'$FILECONTENTS'","'$date'"]}'
+    file_upload ai-model upload/ai-model/model_test.h5
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["yohan","model_test","2.0","Python","'$price'","AAA","input_test","'$FILECONTENTS'","'$date'"]}'
 
     # get ai model info
     blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
-    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelCount","Args":[]}'
-
     blockchain_chaincode_query ai-model '{"function":"GetAIModelInfo","Args":["hyoeun","test_model","1.0"]}'
 
     # file download
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["user1"]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["user2"]}'
     download_file="test_model"
-    file_download ai-model $download_file '{"function":"GetAIModelContents","Args":["hyoeun","'$download_file'","1.0"]}'
+    file_download ai-model $download_file '{"function":"GetAIModelContents","Args":["hyoeun","'$download_file'","1.0","user1"]}'
+    download_file="model_test"
+    file_download ai-model $download_file '{"function":"GetAIModelContents","Args":["yohan","'$download_file'","2.0","user1"]}'
 
     # NOTE ai-model is exist error
     blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["hyoeun","test_model","1.0","C","'$price'","CCC","iris_learning","aaaaa","'$date'"]}'
-    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelCount","Args":[]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["AC"]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["user1"]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["user2"]}'
 
     # # TODO
     # for CHANNEL in ${CHANNELS[@]}

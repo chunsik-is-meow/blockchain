@@ -28,6 +28,7 @@ type AIModelType struct {
 
 type AIModelCount struct {
 	Type  string `json:"type"`
+	List  string `json:"list"`
 	Count int    `json:"count"`
 }
 
@@ -43,6 +44,7 @@ func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) er
 	} else if isInitBytes == nil {
 		initCount := AIModelCount{
 			Type:  "AIModelCount",
+			List:  "",
 			Count: 0,
 		}
 		initMeowAsBytes, err := json.Marshal(initCount)
@@ -72,9 +74,9 @@ func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) er
 	}
 }
 
-func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, username string, name string, version string, language string, price int, owner string, description string, contents string, timestamp string) error {
+func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, uploader string, name string, version string, language string, price int, owner string, description string, contents string, timestamp string) error {
 	// a.AIModelInsert(ctx, name, description, owner, timestamp)
-	exists, err := a.aiModelExists(ctx, username, name, version)
+	exists, err := a.aiModelExists(ctx, uploader, name, version)
 	if err != nil {
 		return err
 	}
@@ -102,16 +104,17 @@ func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, us
 	if err != nil {
 		return fmt.Errorf("failed to json.Marshal(). %v", err)
 	}
-	aiModelKey := makeAIModelKey(username, name, version)
+	aiModelKey := makeAIModelKey(uploader, name, version)
 	ctx.GetStub().PutState(aiModelKey, aiModelAsBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put to world state. %v", err)
 	}
-	currentAIModelCount, err := a.GetAllAIModelCount(ctx)
+	currentAIModelCount, err := a.GetAIModelCount(ctx, "AC")
 	if err != nil {
 		return fmt.Errorf("failed to get current meow. %v", err)
 	}
-	currentAIModelCount.Count++
+	currentAIModelCount.Count += 1
+	currentAIModelCount.List += "/" + name
 
 	currentAIModelCountAsBytes, err := json.Marshal(currentAIModelCount)
 	if err != nil {
@@ -145,9 +148,9 @@ func (a *AIChaincode) GetAllAIModelInfo(ctx contractapi.TransactionContextInterf
 	return aiModelInfos, nil
 }
 
-func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface, username string, name string, version string) (*AIModelType, error) {
+func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface, uploader string, name string, version string) (*AIModelType, error) {
 	aiModelInfo := &AIModelType{}
-	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(username, name, version))
+	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(uploader, name, version))
 	if err != nil {
 		return nil, err
 	} else if aiModelAsBytes == nil {
@@ -169,9 +172,9 @@ func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface
 	return aiModelInfo, nil
 }
 
-func (a *AIChaincode) GetAIModelContents(ctx contractapi.TransactionContextInterface, username string, name string, version string) (string, error) {
+func (a *AIChaincode) GetAIModelContents(ctx contractapi.TransactionContextInterface, uploader string, name string, version string, downloader string) (string, error) {
 	var aiModelInfo AIModelType
-	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(username, name, version))
+	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(uploader, name, version))
 	if err != nil {
 		return "not existed...", err
 	} else if aiModelAsBytes == nil {
@@ -189,17 +192,32 @@ func (a *AIChaincode) GetAIModelContents(ctx contractapi.TransactionContextInter
 		if err != nil {
 			return "failed...", err
 		}
+
 	}
+	currentAIModelCount, err := a.GetAIModelCount(ctx, downloader)
+	if err != nil {
+		return "failed to get current meow", err
+	}
+	currentAIModelCount.Count += 1
+	currentAIModelCount.List += "/" + name
+
+	currentAIModelCountAsBytes, err := json.Marshal(currentAIModelCount)
+	if err != nil {
+		return "failed to json.Marshal()", err
+	}
+	ctx.GetStub().PutState(makeAIModelCountKey(downloader), currentAIModelCountAsBytes)
+
 	return aiModelInfo.Contents, nil
 }
 
-func (a *AIChaincode) GetAllAIModelCount(ctx contractapi.TransactionContextInterface) (*AIModelCount, error) {
+func (a *AIChaincode) GetAIModelCount(ctx contractapi.TransactionContextInterface, key string) (*AIModelCount, error) {
 	currentAIModelCount := &AIModelCount{}
-	currentAIModelCountAsBytes, err := ctx.GetStub().GetState(makeAIModelCountKey("AC"))
+	currentAIModelCountAsBytes, err := ctx.GetStub().GetState(makeAIModelCountKey(key))
 	if err != nil {
 		return nil, err
 	} else if currentAIModelCountAsBytes == nil {
-		currentAIModelCount.Type = "CurrentMeowAmount"
+		currentAIModelCount.Type = "AIModelCount"
+		currentAIModelCount.List = ""
 		currentAIModelCount.Count = 0
 	} else {
 		err = json.Unmarshal(currentAIModelCountAsBytes, currentAIModelCount)
@@ -219,11 +237,11 @@ func makeAIModelCountKey(key string) string {
 	return sb.String()
 }
 
-func makeAIModelKey(username string, name string, version string) string {
+func makeAIModelKey(uploader string, name string, version string) string {
 	var sb strings.Builder
 
 	sb.WriteString("A_")
-	sb.WriteString(username)
+	sb.WriteString(uploader)
 	sb.WriteString("_")
 	sb.WriteString(name)
 	sb.WriteString("_")
@@ -231,8 +249,8 @@ func makeAIModelKey(username string, name string, version string) string {
 	return sb.String()
 }
 
-func (a *AIChaincode) aiModelExists(ctx contractapi.TransactionContextInterface, username string, name string, version string) (bool, error) {
-	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(username, name, version))
+func (a *AIChaincode) aiModelExists(ctx contractapi.TransactionContextInterface, uploader string, name string, version string) (bool, error) {
+	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(uploader, name, version))
 	if err != nil {
 		return false, fmt.Errorf("ai-model is exist...: %v", err)
 	}
