@@ -349,16 +349,19 @@ function file_download {
     
     command "docker exec -it \
     cli.$peer \
-    peer chaincode query  \
+    peer chaincode invoke  \
     --channelID $channel \
     --name $chaincode \
-    -c $3" > down.txt
-
-    contents=$(head -2 down.txt | tail -1)
+    -c $3 \
+    $GLOBAL_FLAGS" > down.txt
+    
+    con=$(head -2 down.txt | tail -1)
+    echo = ${con:144:-3} 1> down.txt
+    contents=$(cat down.txt)
     if [ $channel = "data" ]; then
-        echo $contents | tr '!' '\n' 1> download/$channel/$file.csv
+        echo $contents | tr '!' '\n' | tr -d '= ' 1> download/$channel/$file.csv
     else
-        down=`echo $contents | tr -d '!'`
+        down=`echo $contents | tr -d '!' | tr -d '= '`
         echo -n $down | xxd -r -p  1> download/$channel/$file.h5
     fi
     rm down.txt
@@ -367,29 +370,29 @@ function file_download {
 function blockchain_test {
     date=$(date '+%Y-%m-%d-%H-%M-%S')
     price=3100
-    # ################################################### trade chaincode ####################################################
+    ################################################### trade chaincode ####################################################
 
-    # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
+    blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
+    blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
-    # # NOTE meow is lacking error
-    # blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
+    # NOTE meow is lacking error
+    blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
 
-    # blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
-    # sleep 2s
+    blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
+    sleep 2s
 
-    # # NOTE price mismatch error
-    # blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","300","'$date'"]}'
+    # NOTE price mismatch error
+    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","300","'$date'"]}'
 
-    # blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
+    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
 
-    # # NOTE already buy model
-    # blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
+    # NOTE already buy model
+    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
 
-    # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
+    blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
+    blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
-    # blockchain_chaincode_query trade '{"function":"GetQueryHistory","Args":["hyoeun"]}'
+    blockchain_chaincode_query trade '{"function":"GetQueryHistory","Args":["hyoeun"]}'
 
     ################################################## data chaincode ####################################################
     blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
