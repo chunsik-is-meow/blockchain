@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
-	pb "github.com/hyperledger/fabric-protos-go/peer"
 )
 
 const GENESIS_MINT_AMOUNT = 100000000
@@ -180,13 +179,15 @@ func (t *TradeChaincode) Transfer(ctx contractapi.TransactionContextInterface, f
 }
 
 // GetModel ...
-func (t *TradeChaincode) GetModel(ctx contractapi.TransactionContextInterface, modelKey string) (pb.response, error) {
+func (t *TradeChaincode) GetModel(ctx contractapi.TransactionContextInterface, modelKey string) (*AIModelType, error) {
 	funNameAsBytes := []byte("GetAIModelInfoWithKey")
 	argAsBytes := []byte(modelKey)
 	args := [][]byte{funNameAsBytes, argAsBytes}
 	result := ctx.GetStub().InvokeChaincode("ai-model", args, "ai-model");
+	aiModelInfo := &AIModelType{}
+	json.Unmarshal(result.Payload, aiModelInfo)
 	
-	return result, nil
+	return aiModelInfo, nil
 }
 
 // BuyModel ...
@@ -198,6 +199,10 @@ func (t *TradeChaincode) BuyModel(ctx contractapi.TransactionContextInterface, u
 		return fmt.Errorf("already buy model ...")
 	}
 
+	aiModel := &AIModelType{}
+	aiModel, err = t.GetModel(ctx, modelKey)
+	fmt.Println(aiModel)
+	
 	// TODO
 	// GetModel from ai-model-channel
 	// check isNotExist Model Error

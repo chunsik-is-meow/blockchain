@@ -34,7 +34,7 @@ type AIModelCount struct {
 // InitLedger ...
 func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	aiModelInfos := []AIModelType{
-		{Type: "ai-model", Name: "test", Language: "test", Price: 0, Owner: "test", Score: 100, Description: "test", Contents: "test", Timestamp: "2021-08-27-09-11-49"},
+		{Type: "ai-model", Name: "test", Language: "test", Price: 100, Owner: "test", Score: 100, Description: "test", Contents: "test", Timestamp: "2021-08-27-09-11-49"},
 	}
 
 	isInitBytes, err := ctx.GetStub().GetState("isInit")
