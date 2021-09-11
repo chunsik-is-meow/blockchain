@@ -343,9 +343,15 @@ function blockchain_chaincode_upgrade {
 }
 
 function file_upload {
-    temp=$1
-    contents=`cat $temp`
-    echo $contents | tr ' ' '!' | tr '\0' '@' > up.txt
+    channel=$1
+    temp=$2
+    if [ $channel = "data" ]; then
+        contents=`cat $temp`
+        echo $contents | tr ' ' '!' > up.txt
+    else
+        contents=`hexdump -v -e '/1 "%02X!"' $temp`
+        echo $contents > up.txt
+    fi
     FILECONTENTS=`cat up.txt`
     rm up.txt
 }
@@ -361,16 +367,20 @@ function file_download {
     
     command "docker exec -it \
     cli.$peer \
-    peer chaincode query  \
+    peer chaincode invoke  \
     --channelID $channel \
     --name $chaincode \
-    -c $3" > down.txt
-
-    contents=$(head -2 down.txt | tail -1)
+    -c $3 \
+    $GLOBAL_FLAGS" > down.txt
+    
+    con=$(head -2 down.txt | tail -1)
+    echo = ${con:144:-3} 1> down.txt
+    contents=$(cat down.txt)
     if [ $channel = "data" ]; then
-        echo $contents | tr '!' '\n' 1> download/$channel/$file.csv
+        echo $contents | tr '!' '\n' | tr -d '= ' 1> download/$channel/$file.csv
     else
-        echo $contents | tr '!' '\n' 1> download/$channel/$file.h5
+        down=`echo $contents | tr -d '!' | tr -d '= '`
+        echo -n $down | xxd -r -p  1> download/$channel/$file.h5
     fi
     rm down.txt
 }
@@ -411,65 +421,124 @@ function blockchain_test_data {
     blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
     blockchain_chaincode_query data '{"function":"GetAllDataCount","Args":[]}'
     # file upload
-    file_upload upload/data/iris.csv
+    file_upload data upload/data/iris.csv
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","iris","1.0","iris_classfication","R.A.Fisher","'$FILECONTENTS'","'$date'"]}'
-    file_upload upload/data/wine.csv
+    file_upload data upload/data/wine.csv
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["hyoeun","wine","1.2","wine_classfication","PARVUS","'$FILECONTENTS'","'$date'"]}'
-    file_upload upload/data/cancer.csv
+    file_upload data upload/data/cancer.csv
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","cancer","2.0","cancer_classfication","L.Mangasarian.","'$FILECONTENTS'","'$date'"]}'
-    sleep 2s
-
+    sleep 3s
     # get datainfo
     blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
-    blockchain_chaincode_query data '{"function":"GetAllDataCount","Args":[]}'
+    blockchain_chaincode_query data '{"function":"GetCommonDataCount","Args":["DC"]}'
 
-    blockchain_chaincode_query data '{"function":"GetCommonDataInfo","Args":["yohan","iris","1.0"]}'
+    blockchain_chaincode_query data '{"function":"GetCommonDataInfo","Args":["yohan","cancer","2.0"]}'
 
     #file download
+    blockchain_chaincode_query data '{"function":"GetCommonDataCount","Args":["user1"]}'
+    blockchain_chaincode_query data '{"function":"GetCommonDataCount","Args":["user2"]}'
     download_file="iris"
-    file_download data $download_file '{"function":"GetCommonDataContents","Args":["yohan","'$download_file'","1.0"]}'
+    file_download data $download_file '{"function":"GetCommonDataContents","Args":["yohan","'$download_file'","1.0","user1"]}'
     download_file="wine"
-    file_download data $download_file '{"function":"GetCommonDataContents","Args":["hyoeun","'$download_file'","1.2"]}'
+    file_download data $download_file '{"function":"GetCommonDataContents","Args":["hyoeun","'$download_file'","1.2","user1"]}'
     download_file="cancer"
-    file_download data $download_file '{"function":"GetCommonDataContents","Args":["yohan","'$download_file'","2.0"]}'
+    file_download data $download_file '{"function":"GetCommonDataContents","Args":["yohan","'$download_file'","2.0","user2"]}'
+    sleep 3s
+
+    # count
+    blockchain_chaincode_query data '{"function":"GetCommonDataCount","Args":["DC"]}'
+    blockchain_chaincode_query data '{"function":"GetCommonDataCount","Args":["user1"]}'
+    blockchain_chaincode_query data '{"function":"GetCommonDataCount","Args":["user2"]}'
 
     # NOTE data is exist error
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","iris","1.0","iris_classfication","R.A.Fisher","aaaaa","'$date'"]}'
-    blockchain_chaincode_query data '{"function":"GetAllDataCount","Args":[]}'
 }
 
 function blockchain_test_ai {
     date=$(date '+%Y-%m-%d-%H-%M-%S')
     price=100
-   
-    # #################################################### ai-model chaincode ####################################################\
-    # TODO 
-    # add verification at PutAIModel
-    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
-    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelCount","Args":[]}'
     
-    file_upload upload/ai-model/test_model.h5
+    #################################################### ai-model chaincode ####################################################
+    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["AC"]}'
+    
+    file_upload ai-model upload/ai-model/test_model.h5
     blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["hyoeun","test_model","1.0","Python","'$price'","CCC","test_input","'$FILECONTENTS'","'$date'"]}'
+    file_upload ai-model upload/ai-model/model_test.h5
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["yohan","model_test","2.0","Python","'$price'","AAA","input_test","'$FILECONTENTS'","'$date'"]}'
+    sleep 3s
 
     # get ai model info
     blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
-    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelCount","Args":[]}'
-
     blockchain_chaincode_query ai-model '{"function":"GetAIModelInfo","Args":["hyoeun","test_model","1.0"]}'
 
     # file download
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["user1"]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["user2"]}'
     download_file="test_model"
-    file_download ai-model $download_file '{"function":"GetAIModelContents","Args":["hyoeun","'$download_file'","1.0"]}'
+    file_download ai-model $download_file '{"function":"GetAIModelContents","Args":["hyoeun","'$download_file'","1.0","user1"]}'
+    file_download ai-model $download_file '{"function":"GetAIModelContents","Args":["hyoeun","'$download_file'","1.0","user2"]}'
+    download_file="model_test"
+    file_download ai-model $download_file '{"function":"GetAIModelContents","Args":["yohan","'$download_file'","2.0","user1"]}'
+    sleep 3s
+
+    # count
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["AC"]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["user1"]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["user2"]}'
 
     # NOTE ai-model is exist error
     blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["hyoeun","test_model","1.0","C","'$price'","CCC","iris_learning","aaaaa","'$date'"]}'
-    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelCount","Args":[]}'
+    
+}
+
+function blockchain_check { 
+    ################################################## data chaincode ####################################################
+    # get datainfo
+    blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
+    blockchain_chaincode_query data '{"function":"GetCommonDataCount","Args":["DC"]}'
+
+    blockchain_chaincode_query data '{"function":"GetCommonDataInfo","Args":["yohan","cancer","2.0"]}'
+    #file download
+    blockchain_chaincode_query data '{"function":"GetCommonDataCount","Args":["user1"]}'
+    blockchain_chaincode_query data '{"function":"GetCommonDataCount","Args":["user2"]}'
+    download_file="iris"
+    file_download data $download_file '{"function":"GetCommonDataContents","Args":["yohan","'$download_file'","1.0","hyoeun"]}'
+    download_file="wine"
+    file_download data $download_file '{"function":"GetCommonDataContents","Args":["hyoeun","'$download_file'","1.2","user1"]}'
+    download_file="cancer"
+    file_download data $download_file '{"function":"GetCommonDataContents","Args":["yohan","'$download_file'","2.0","user2"]}'
+
+    # count
+    blockchain_chaincode_query data '{"function":"GetCommonDataCount","Args":["DC"]}'
+    blockchain_chaincode_query data '{"function":"GetCommonDataCount","Args":["user1"]}'
+    blockchain_chaincode_query data '{"function":"GetCommonDataCount","Args":["user2"]}'
+
+
+    #################################################### ai-model chaincode ####################################################
+     # get ai model info
+    blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelInfo","Args":["hyoeun","test_model","1.0"]}'
+
+    # file download
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["user1"]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["user2"]}'
+    download_file="test_model"
+    file_download ai-model $download_file '{"function":"GetAIModelContents","Args":["hyoeun","'$download_file'","1.0","hyoeun"]}'
+    file_download ai-model $download_file '{"function":"GetAIModelContents","Args":["hyoeun","'$download_file'","1.0","user2"]}'
+    download_file="model_test"
+    file_download ai-model $download_file '{"function":"GetAIModelContents","Args":["yohan","'$download_file'","2.0","user1"]}'
+
+    # count
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["AC"]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["user1"]}'
+    blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["user2"]}'
 }
 
 
 function main {
     case $1 in
-        all | clean | build | up | down | channel | chaincode | test | upgrade)
+        all | clean | build | up | down | channel | chaincode | test | upgrade | check)
             cmd=blockchain_$1
             shift
             $cmd $@
