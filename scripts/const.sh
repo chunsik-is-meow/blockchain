@@ -15,7 +15,6 @@ fv=2.2.2
 # CHANNELS=(data trade ai-model)
 # CHAINCODE_DIR=/etc/hyperledger/fabric/chaincodes
 # CHAINCODES=(data trade ai-model)
-# VERSION=1.0
 
 # for dev
 ORDERER_ADDR=orderer0.pusan.ac.kr:7050
@@ -25,4 +24,3 @@ PEERS=(peer0.management.pusan.ac.kr peer0.verification-01.pusan.ac.kr peer0.veri
 CHANNELS=(data trade ai-model)
 CHAINCODE_DIR=/etc/hyperledger/fabric/chaincodes
 CHAINCODES=(data trade ai-model)
-VERSION=1.0

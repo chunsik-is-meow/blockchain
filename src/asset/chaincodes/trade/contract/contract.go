@@ -23,10 +23,11 @@ type MeowType struct {
 
 // TransferType ...
 type TransferType struct {
-	Type   string `json:"type"`
-	From   string `json:"from"`
-	To     string `json:"to"`
-	Amount uint32 `json:"amount"`
+	Type      string `json:"type"`
+	From      string `json:"from"`
+	To        string `json:"to"`
+	Amount    uint32 `json:"amount"`
+	Timestamp string `json:"timestamp"`
 }
 
 // RewardType ...
@@ -52,6 +53,21 @@ type Model struct {
 	VerificationOrgs []string    `json:"verification_orgs"`
 	Result           ModelResult `json:"model_result"`
 	Price            uint32      `json:"price"`
+}
+
+// AIModelType ...
+type AIModelType struct {
+	Type             string   `json:"type"`
+	Name             string   `json:"name"`
+	Language         string   `json:"language"`
+	Price            uint32   `json:"price"`
+	Owner            string   `json:"owner"`
+	Score            uint32   `json:"score"`
+	Downloaded       uint32   `json:"downloaded"`
+	Description      string   `json:"description"`
+	VerificationOrgs []string `json:"verification_orgs"`
+	Contents         string   `json:"contents`
+	Timestamp        string   `json:"timestamp"`
 }
 
 // InitLedger ...
@@ -109,10 +125,11 @@ func (t *TradeChaincode) GetCurrentMeow(ctx contractapi.TransactionContextInterf
 func (t *TradeChaincode) Transfer(ctx contractapi.TransactionContextInterface, from string, to string, amount uint32, timestamp string, meowType string) error {
 	// INSERT Transfer history
 	transferMeow := TransferType{
-		Type:   "transfer",
-		From:   from,
-		To:     to,
-		Amount: amount,
+		Type:      "transfer",
+		From:      from,
+		To:        to,
+		Amount:    amount,
+		Timestamp: timestamp,
 	}
 
 	transferMeowAsBytes, err := json.Marshal(transferMeow)
@@ -165,6 +182,18 @@ func (t *TradeChaincode) Transfer(ctx contractapi.TransactionContextInterface, f
 	return nil
 }
 
+// GetModel ...
+func (t *TradeChaincode) GetModel(ctx contractapi.TransactionContextInterface, modelKey string) (*AIModelType, error) {
+	funNameAsBytes := []byte("GetAIModelInfoWithKey")
+	argAsBytes := []byte(modelKey)
+	args := [][]byte{funNameAsBytes, argAsBytes}
+	result := ctx.GetStub().InvokeChaincode("ai-model", args, "ai-model")
+	aiModelInfo := &AIModelType{}
+	json.Unmarshal(result.Payload, aiModelInfo)
+
+	return aiModelInfo, nil
+}
+
 // BuyModel ...
 func (t *TradeChaincode) BuyModel(ctx contractapi.TransactionContextInterface, uid string, modelKey string, price uint32, timestamp string) error {
 	checkBuyAIModelAsBytes, err := ctx.GetStub().GetState(makeBuyAIModelKey(uid, modelKey))
@@ -173,6 +202,10 @@ func (t *TradeChaincode) BuyModel(ctx contractapi.TransactionContextInterface, u
 	} else if checkBuyAIModelAsBytes != nil {
 		return fmt.Errorf("already buy model ...")
 	}
+
+	aiModel := &AIModelType{}
+	aiModel, err = t.GetModel(ctx, modelKey)
+	fmt.Println(aiModel)
 
 	// TODO
 	// GetModel from ai-model-channel

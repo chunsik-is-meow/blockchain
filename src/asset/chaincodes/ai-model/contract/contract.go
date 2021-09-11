@@ -18,10 +18,10 @@ type AIModelType struct {
 	Type             string   `json:"type"`
 	Name             string   `json:"name"`
 	Language         string   `json:"language"`
-	Price            int      `json:"price"`
+	Price            uint32   `json:"price"`
 	Owner            string   `json:"owner"`
-	Score            int      `json:"score"`
-	Downloaded       int      `json:"downloaded"`
+	Score            uint32   `json:"score"`
+	Downloaded       uint32   `json:"downloaded"`
 	Description      string   `json:"description"`
 	VerificationOrgs []string `json:"verification_orgs"`
 	Contents         string   `json:"contents`
@@ -59,7 +59,7 @@ func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) er
 	}
 }
 
-func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, uploader string, name string, version string, language string, price int, owner string, description string, contents string, timestamp string) error {
+func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, uploader string, name string, version string, language string, price uint32, owner string, description string, contents string, timestamp string) error {
 	exists, err := a.aiModelExists(ctx, uploader, name, version)
 	if err != nil {
 		return err
@@ -72,7 +72,8 @@ func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, up
 	if err != nil {
 		return err
 	}
-	download := 0
+	var download uint32
+	download = 0
 	verificationOrgs := []string{"verification-01"}
 	aiModelInfo := AIModelType{
 		Type:             "AI-Model",
@@ -141,9 +142,10 @@ func (a *AIChaincode) aiModelExists(ctx contractapi.TransactionContextInterface,
 	return aiModelAsBytes != nil, nil
 }
 
-func evaluateScore(ctx contractapi.TransactionContextInterface, aiModel string) (int, error) {
+func evaluateScore(ctx contractapi.TransactionContextInterface, aiModel string) (uint32, error) {
 	// TODO
-	score := 81
+	var score uint32
+	score = 81
 	return score, nil
 }
 
@@ -155,6 +157,32 @@ func (a *AIChaincode) GetAllAIModelInfo(ctx contractapi.TransactionContextInterf
 func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface, uploader string, name string, version string) (*AIModelType, error) {
 	aiModelInfo := &AIModelType{}
 	aiModelAsBytes, err := ctx.GetStub().GetState(makeAIModelKey(uploader, name, version))
+	if err != nil {
+		return nil, err
+	} else if aiModelAsBytes == nil {
+		aiModelInfo.Type = "empty"
+		aiModelInfo.Name = "empty"
+		aiModelInfo.Language = "empty"
+		aiModelInfo.Price = 0
+		aiModelInfo.Owner = "empty"
+		aiModelInfo.Score = 0
+		aiModelInfo.Downloaded = 0
+		aiModelInfo.Description = "empty"
+		aiModelInfo.VerificationOrgs = []string{""}
+		aiModelInfo.Contents = "empty"
+		aiModelInfo.Timestamp = "empty"
+	} else {
+		err = json.Unmarshal(aiModelAsBytes, &aiModelInfo)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return aiModelInfo, nil
+}
+
+func (a *AIChaincode) GetAIModelInfoWithKey(ctx contractapi.TransactionContextInterface, aiModelKey string) (*AIModelType, error) {
+	aiModelInfo := &AIModelType{}
+	aiModelAsBytes, err := ctx.GetStub().GetState(aiModelKey)
 	if err != nil {
 		return nil, err
 	} else if aiModelAsBytes == nil {
