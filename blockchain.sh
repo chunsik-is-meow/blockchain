@@ -400,12 +400,10 @@ function blockchain_test_trade {
     sleep 2s
 
     # NOTE price mismatch error
-    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","300","'$date'"]}'
-
-    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
+    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","A_admin_test_0.0","300","'$date'"]}'
 
     # NOTE already buy model
-    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","AI_yohan_test_0.1","3000","'$date'"]}'
+    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","A_admin_test_0.0","100","'$date'"]}'
 
     blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
     blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
@@ -454,7 +452,6 @@ function blockchain_test_data {
 
     # NOTE data is exist error
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","iris","1.0","iris_classfication","R.A.Fisher","aaaaa","'$date'"]}'
-
 }
 
 function blockchain_test_ai {
@@ -537,6 +534,7 @@ function blockchain_check {
     blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["user1"]}'
     blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["user2"]}'
 }
+
 
 function main {
     case $1 in
