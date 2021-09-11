@@ -447,7 +447,7 @@ function blockchain_test_ai {
     blockchain_chaincode_query ai-model '{"function":"GetAllAIModelCount","Args":[]}'
     
     file_upload upload/ai-model/test_model.h5
-    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["hyoeun","test_model","1.0","Python","'$price'","CCC",["verification-01"],"test_input","'$FILECONTENTS'","'$date'"]}'
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["hyoeun","test_model","1.0","Python","'$price'","CCC","test_input","'$FILECONTENTS'","'$date'"]}'
 
     # get ai model info
     blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
@@ -460,7 +460,7 @@ function blockchain_test_ai {
     file_download ai-model $download_file '{"function":"GetAIModelContents","Args":["hyoeun","'$download_file'","1.0"]}'
 
     # NOTE ai-model is exist error
-    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["hyoeun","test_model","1.0","C","'$price'","CCC",["verification-01"],"iris_learning","aaaaa","'$date'"]}'
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["hyoeun","test_model","1.0","C","'$price'","CCC","iris_learning","aaaaa","'$date'"]}'
     blockchain_chaincode_query ai-model '{"function":"GetAllAIModelCount","Args":[]}'
 }
 
