@@ -419,7 +419,8 @@ function blockchain_test_data {
    
     ################################################## data chaincode ####################################################
     blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
-    blockchain_chaincode_query data '{"function":"GetAllDataCount","Args":[]}'
+    blockchain_chaincode_query data '{"function":"GetCommonDataCount","Args":["DC"]}'
+    
     # file upload
     file_upload data upload/data/iris.csv
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","iris","1.0","iris_classfication","R.A.Fisher","'$FILECONTENTS'","'$date'"]}'
