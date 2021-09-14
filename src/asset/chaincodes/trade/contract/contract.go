@@ -43,18 +43,6 @@ type BuyAIModelType struct {
 	History   []RewardType `json:"history"`
 }
 
-// ModelResult ...
-type ModelResult struct {
-	F1Score string `json:"f1_score"`
-}
-
-// Model ...
-type Model struct {
-	VerificationOrgs []string    `json:"verification_orgs"`
-	Result           ModelResult `json:"model_result"`
-	Price            uint32      `json:"price"`
-}
-
 // AIModelType ...
 type AIModelType struct {
 	Type             string   `json:"type"`
@@ -207,25 +195,7 @@ func (t *TradeChaincode) BuyModel(ctx contractapi.TransactionContextInterface, u
 	aiModel, err = t.GetModel(ctx, modelKey)
 	fmt.Println(aiModel)
 
-	// TODO
-	// GetModel from ai-model-channel
-	// check isNotExist Model Error
-	// modelKey -> ai-model channel query getModel(modelKey) ->
-	// Model {
-	// 	v orgs
-	// 	result
-	//  price
-	// }
-
-	model := Model{
-		VerificationOrgs: []string{"verification-01"},
-		Result: ModelResult{
-			F1Score: "93.4%",
-		},
-		Price: 3000,
-	}
-
-	if price != model.Price {
+	if price != aiModel.Price {
 		return fmt.Errorf("the price mismatch in blockchain ..")
 	}
 
@@ -241,7 +211,7 @@ func (t *TradeChaincode) BuyModel(ctx contractapi.TransactionContextInterface, u
 	// NOTE
 	// modelKey -> AI_uid_modelName_version(unique)
 	seller := strings.Split(modelKey, "_")[1]
-	verificationOrgs := model.VerificationOrgs
+	verificationOrgs := aiModel.VerificationOrgs
 
 	if price%10 != 0 {
 		return fmt.Errorf("only available in units of 10 meow")
