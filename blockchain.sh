@@ -570,7 +570,7 @@ function blockchain_check {
 
 function main {
     case $1 in
-        all | clean | build | up | down | channel | chaincode | test | upgrade | check)
+        all | clean | build | up | down | channel | chaincode | test | upgrade | check | init)
             cmd=blockchain_$1
             shift
             $cmd $@
