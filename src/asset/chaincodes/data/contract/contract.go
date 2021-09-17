@@ -15,12 +15,14 @@ type DataChaincode struct {
 
 // DataType ...
 type DataType struct {
-	Name        string `json:"name"`
 	Type        string `json:"type"`
+	Uploader    string `json:"uploader"`
+	Name        string `json:"name"`
+	Version     string `json:"version"`
 	Description string `json:"description"`
 	Downloaded  int    `json:"downloaded"`
 	Owner       string `json:"owner"`
-	Contents    string `json:"contents`
+	Contents    string `json:"contents"`
 	Timestamp   string `json:"timestamp"`
 }
 
@@ -67,8 +69,10 @@ func (d *DataChaincode) PutCommonData(ctx contractapi.TransactionContextInterfac
 
 	download := 0
 	dataInfo := DataType{
-		Name:        name,
 		Type:        "data",
+		Uploader:    uploader,
+		Name:        name,
+		Version:     version,
 		Description: description,
 		Downloaded:  download,
 		Owner:       owner,
@@ -139,8 +143,34 @@ func (d *DataChaincode) GetCommonDataInfo(ctx contractapi.TransactionContextInte
 	if err != nil {
 		return nil, err
 	} else if dataAsBytes == nil {
-		dataInfo.Name = "empty"
 		dataInfo.Type = "empty"
+		dataInfo.Uploader = "empty"
+		dataInfo.Name = "empty"
+		dataInfo.Version = "empty"
+		dataInfo.Description = "empty"
+		dataInfo.Downloaded = 0
+		dataInfo.Owner = "empty"
+		dataInfo.Contents = "empty"
+		dataInfo.Timestamp = "empty"
+	} else {
+		err = json.Unmarshal(dataAsBytes, &dataInfo)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return dataInfo, nil
+}
+
+func (d *DataChaincode) GetCommonDataInfoWithKey(ctx contractapi.TransactionContextInterface, dataKey string) (*DataType, error) {
+	dataInfo := &DataType{}
+	dataAsBytes, err := ctx.GetStub().GetState(dataKey)
+	if err != nil {
+		return nil, err
+	} else if dataAsBytes == nil {
+		dataInfo.Type = "empty"
+		dataInfo.Uploader = "empty"
+		dataInfo.Name = "empty"
+		dataInfo.Version = "empty"
 		dataInfo.Description = "empty"
 		dataInfo.Downloaded = 0
 		dataInfo.Owner = "empty"

@@ -16,7 +16,9 @@ type AIChaincode struct {
 // AIModelType ...
 type AIModelType struct {
 	Type             string   `json:"type"`
+	Uploader         string   `json:"uploader"`
 	Name             string   `json:"name"`
+	Version          string   `json:"version"`
 	Language         string   `json:"language"`
 	Price            uint32   `json:"price"`
 	Owner            string   `json:"owner"`
@@ -24,7 +26,7 @@ type AIModelType struct {
 	Downloaded       uint32   `json:"downloaded"`
 	Description      string   `json:"description"`
 	VerificationOrgs []string `json:"verification_orgs"`
-	Contents         string   `json:"contents`
+	Contents         string   `json:"contents"`
 	Timestamp        string   `json:"timestamp"`
 }
 
@@ -77,7 +79,9 @@ func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, up
 	verificationOrgs := []string{"verification-01"}
 	aiModelInfo := AIModelType{
 		Type:             "AI-Model",
+		Uploader:         uploader,
 		Name:             name,
+		Version:          version,
 		Language:         language,
 		Price:            price,
 		Owner:            owner,
@@ -161,7 +165,9 @@ func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface
 		return nil, err
 	} else if aiModelAsBytes == nil {
 		aiModelInfo.Type = "empty"
+		aiModelInfo.Uploader = "empty"
 		aiModelInfo.Name = "empty"
+		aiModelInfo.Version = "empty"
 		aiModelInfo.Language = "empty"
 		aiModelInfo.Price = 0
 		aiModelInfo.Owner = "empty"
@@ -187,7 +193,9 @@ func (a *AIChaincode) GetAIModelInfoWithKey(ctx contractapi.TransactionContextIn
 		return nil, err
 	} else if aiModelAsBytes == nil {
 		aiModelInfo.Type = "empty"
+		aiModelInfo.Uploader = "empty"
 		aiModelInfo.Name = "empty"
+		aiModelInfo.Version = "empty"
 		aiModelInfo.Language = "empty"
 		aiModelInfo.Price = 0
 		aiModelInfo.Owner = "empty"
