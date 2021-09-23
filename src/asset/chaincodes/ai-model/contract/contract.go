@@ -61,7 +61,7 @@ func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) er
 	}
 }
 
-func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, uploader string, name string, version string, language string, price uint32, owner string, score uint64, description string, contents string, timestamp string) error {
+func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, uploader string, name string, version string, language string, price uint32, owner string, description string, contents string, timestamp string, score uint64) error {
 	exists, err := a.aiModelExists(ctx, uploader, name, version)
 	if err != nil {
 		return err
