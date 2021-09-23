@@ -342,15 +342,25 @@ function blockchain_chaincode_upgrade {
     blockchain_chaincode_commit 'peer0.management.pusan.ac.kr' $CHANNEL $CHAINCODE_NAME $VERSION $SEQUENCE
 }
 
+function evaluate_Model {
+    data=$1
+    model=$2
+    pred=$3
+    score=$(python3 src/asset/chaincodes/ai-model/evaluate.py $data $model $pred)
+}
+
 function file_upload {
     channel=$1
-    temp=$2
+    data=$2
+    model=$3
+    pred=$4
     if [ $channel = "data" ]; then
-        contents=`cat $temp`
+        contents=`cat $data`
         echo $contents | tr ' ' '!' > up.txt
     else
-        contents=`hexdump -v -e '/1 "%02X!"' $temp`
+        contents=`hexdump -v -e '/1 "%02X!"' $model`
         echo $contents > up.txt
+        evaluate_Model $data $model $pred
     fi
     FILECONTENTS=`cat up.txt`
     rm up.txt
@@ -385,38 +395,6 @@ function file_download {
     rm down.txt
 }
 
-function blockchain_init {
-    date=$(date '+%Y-%m-%d-%H-%M-%S')
-    price=1000
-
-    # file upload
-    file_upload data upload/data/iris.csv
-    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","iris","1.0","iris_classfication","R.A.Fisher","'$FILECONTENTS'","'$date'"]}'
-    
-    sleep 3s
-    file_upload data upload/data/wine.csv
-    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["hyoeun","wine","1.2","wine_classfication","PARVUS","'$FILECONTENTS'","'$date'"]}'
-    
-    sleep 3s
-    file_upload data upload/data/cancer.csv
-    blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","cancer","2.0","cancer_classfication","L.Mangasarian.","'$FILECONTENTS'","'$date'"]}'
-
-    file_upload ai-model upload/ai-model/test_model.h5
-    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["hyoeun","test_model","1.0","Python","'$price'","CCC","test_input","'$FILECONTENTS'","'$date'"]}'
-    sleep 2s
-
-    file_upload ai-model upload/ai-model/model_test.h5
-    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["yohan","model_test","2.0","Python","'$price'","AAA","input_test","'$FILECONTENTS'","'$date'"]}'
-    sleep 2s
-
-
-    blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
-    blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["bank","yohan","300000","'$date'","transfer"]}'
-    sleep 2s
-
-    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["yohan","A_hyoeun_test_model_1.0","'$price'","'$date'"]}'
-}
-
 function blockchain_test_trade {
     date=$(date '+%Y-%m-%d-%H-%M-%S')
     price=100
@@ -426,10 +404,16 @@ function blockchain_test_trade {
     blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
     # NOTE meow is lacking error
-    blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["hyoeun","gydms","30","'$date'","transfer"]}'
+    blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
 
     blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
     sleep 2s
+
+    # NOTE price mismatch error
+    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","A_admin_test_0.0","300","'$date'"]}'
+
+    # NOTE already buy model
+    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","A_admin_test_0.0","100","'$date'"]}'
 
     blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
     blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
@@ -448,18 +432,16 @@ function blockchain_test_data {
     blockchain_chaincode_query data '{"function":"GetCommonDataCount","Args":["DC"]}'
     
     # file upload
-    file_upload data upload/data/iris.csv
+    file_upload data upload/data/iris.csv 0 0
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","iris","1.0","iris_classfication","R.A.Fisher","'$FILECONTENTS'","'$date'"]}'
-    
     sleep 3s
-    file_upload data upload/data/wine.csv
+    file_upload data upload/data/wine.csv 0 0
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["hyoeun","wine","1.2","wine_classfication","PARVUS","'$FILECONTENTS'","'$date'"]}'
-    
     sleep 3s
-    file_upload data upload/data/cancer.csv
+    file_upload data upload/data/cancer.csv 0 0
     blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","cancer","2.0","cancer_classfication","L.Mangasarian.","'$FILECONTENTS'","'$date'"]}'
-    
     sleep 3s
+
     # get datainfo
     blockchain_chaincode_query data '{"function":"GetAllCommonDataInfo","Args":[]}'
     blockchain_chaincode_query data '{"function":"GetCommonDataCount","Args":["DC"]}'
@@ -471,8 +453,10 @@ function blockchain_test_data {
     blockchain_chaincode_query data '{"function":"GetCommonDataCount","Args":["user2"]}'
     download_file="iris"
     file_download data $download_file '{"function":"GetCommonDataContents","Args":["yohan","'$download_file'","1.0","user1"]}'
+    sleep 3s
     download_file="wine"
     file_download data $download_file '{"function":"GetCommonDataContents","Args":["hyoeun","'$download_file'","1.2","user1"]}'
+    sleep 3s
     download_file="cancer"
     file_download data $download_file '{"function":"GetCommonDataContents","Args":["yohan","'$download_file'","2.0","user2"]}'
     sleep 3s
@@ -488,16 +472,18 @@ function blockchain_test_data {
 
 function blockchain_test_ai {
     date=$(date '+%Y-%m-%d-%H-%M-%S')
+    predict="Species"
     price=100
     
     #################################################### ai-model chaincode ####################################################
     blockchain_chaincode_query ai-model '{"function":"GetAllAIModelInfo","Args":[]}'
     blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["AC"]}'
     
-    file_upload ai-model upload/ai-model/test_model.h5
-    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["hyoeun","test_model","1.0","Python","'$price'","CCC","test_input","'$FILECONTENTS'","'$date'"]}'
-    file_upload ai-model upload/ai-model/model_test.h5
-    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["yohan","model_test","2.0","Python","'$price'","AAA","input_test","'$FILECONTENTS'","'$date'"]}'
+    file_upload ai-model upload/data/iris.csv upload/ai-model/test_model.h5 $predict
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["hyoeun","test_model","1.0","Python","'$price'","CCC","'$score'","test_input","'$FILECONTENTS'","'$date'"]}'
+    sleep 3s
+    file_upload ai-model upload/data/iris.csv upload/ai-model/model_test.h5 $predict
+    blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["yohan","model_test","2.0","Python","'$price'","AAA","'$score'","input_test","'$FILECONTENTS'","'$date'"]}'
     sleep 3s
 
     # get ai model info
@@ -510,6 +496,7 @@ function blockchain_test_ai {
     download_file="test_model"
     file_download ai-model $download_file '{"function":"GetAIModelContents","Args":["hyoeun","'$download_file'","1.0","user1"]}'
     file_download ai-model $download_file '{"function":"GetAIModelContents","Args":["hyoeun","'$download_file'","1.0","user2"]}'
+    sleep 3s
     download_file="model_test"
     file_download ai-model $download_file '{"function":"GetAIModelContents","Args":["yohan","'$download_file'","2.0","user1"]}'
     sleep 3s
@@ -567,10 +554,9 @@ function blockchain_check {
     blockchain_chaincode_query ai-model '{"function":"GetAIModelCount","Args":["user2"]}'
 }
 
-
 function main {
     case $1 in
-        all | clean | build | up | down | channel | chaincode | test | upgrade | check | init)
+        all | clean | build | up | down | channel | chaincode | test | upgrade | check | evaluate)
             cmd=blockchain_$1
             shift
             $cmd $@

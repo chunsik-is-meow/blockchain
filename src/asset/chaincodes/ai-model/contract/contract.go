@@ -22,11 +22,11 @@ type AIModelType struct {
 	Language         string   `json:"language"`
 	Price            uint32   `json:"price"`
 	Owner            string   `json:"owner"`
-	Score            uint32   `json:"score"`
+	Score            uint64   `json:"score"`
 	Downloaded       uint32   `json:"downloaded"`
 	Description      string   `json:"description"`
 	VerificationOrgs []string `json:"verification_orgs"`
-	Contents         string   `json:"contents"`
+	Contents         string   `json:"contents`
 	Timestamp        string   `json:"timestamp"`
 }
 
@@ -61,18 +61,13 @@ func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) er
 	}
 }
 
-func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, uploader string, name string, version string, language string, price uint32, owner string, description string, contents string, timestamp string) error {
+func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, uploader string, name string, version string, language string, price uint32, owner string, score uint64, description string, contents string, timestamp string) error {
 	exists, err := a.aiModelExists(ctx, uploader, name, version)
 	if err != nil {
 		return err
 	}
 	if exists {
 		return fmt.Errorf("the aiModel %s already exists", name)
-	}
-	file := ""
-	score, err := evaluateScore(ctx, file)
-	if err != nil {
-		return err
 	}
 	var download uint32
 	download = 0
@@ -144,13 +139,6 @@ func (a *AIChaincode) aiModelExists(ctx contractapi.TransactionContextInterface,
 	}
 
 	return aiModelAsBytes != nil, nil
-}
-
-func evaluateScore(ctx contractapi.TransactionContextInterface, aiModel string) (uint32, error) {
-	// TODO
-	var score uint32
-	score = 81
-	return score, nil
 }
 
 func (a *AIChaincode) GetAllAIModelInfo(ctx contractapi.TransactionContextInterface) ([]*AIModelType, error) {
