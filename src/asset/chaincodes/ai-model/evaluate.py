@@ -4,13 +4,6 @@
 # import functools
 import sys
 
-# model = 'iris_model.h5'
-# data = '../blockchain/upload/data/iris.csv'
-# pred = 'Species'
-
-train_file_path = "aaa.csv"
-test_file_path = "bbb.csv"
-
 def init(model, data):
     global deep_learning_model, deep_learning_graph, attr, ans, features
     # 저장된 모델 로딩
@@ -48,6 +41,9 @@ def evaluate(pred):
     
 
 if __name__ == '__main__':
+# model = 'iris_model.h5'
+# data = '../blockchain/upload/data/iris.csv'
+# pred = 'Species'
     model = sys.argv[1]
     data = sys.argv[2]
     pred = sys.argv[3]
