@@ -1,51 +1,49 @@
-# import numpy as np
-# import tensorflow as tf
-# from keras.models import load_model
-# import functools
+import os
 import sys
+import tensorflow as tf
+from keras.models import load_model
+import test_dataset.data_info as di
 
-def init(model, data):
-    global deep_learning_model, deep_learning_graph, attr, ans, features
-    # 저장된 모델 로딩
-    deep_learning_model = load_model(model)
-    deep_learning_graph = tf.compat.v1.get_default_graph()
+key = sys.argv[1]
+test_model = sys.argv[2]
+batch_size = 32
 
-    # species 이름 로딩
-    f = open(data, mode='r')
-    datas = f.readlines()
-    attr = datas[0].rstrip('\n').split(',')
-    index = attr.index(pred)
-    f.close
-    
-    print(attr)
-    for data in datas:
-        features = data.rstrip('\n').split(',')
-    ans = features[index]
-    del(features[index])
-    del(features[0])
-    
-def prediction(pred):
-    print('features:', features, file=sys.stderr)
-    with deep_learning_graph.as_default():
-        deep_learning_model.predect
-        Y_pred = deep_learning_model(features)
-        return {attr[Y_pred[0]]}
+def pack_features_vector(features, labels):
+  features = tf.stack(list(features.values()), axis=1)
+  return features, labels
 
-def evaluate(pred):
-    score = 82.4
-    return score
-    # features = []
-    # for i in range(len(features)): 
-    #     features[i]=float(features[i])
-    #     prediction(features, pred)
-    
+if key == "iris":
+  test_data = 'test_dataset/iris_test.csv'
+  label_name= di.iris_label_name
+  label_names = di.iris_labels
+  column_names = di.iris_columns
+elif key == "cancer":
+  test_data = 'test_dataset/cancer_test.csv'
+  label_name= di.iris_label_name
+  label_names = di.iris_labels
+  column_names = di.iris_columns
+elif key == "wine":
+  test_data = 'test_dataset/wine_test.csv'
+  label_name= di.iris_label_name
+  label_names = di.iris_labels
+  column_names = di.iris_columns
+else:
+  sys.exit("data not exist")     
 
-if __name__ == '__main__':
-# model = 'iris_model.h5'
-# data = '../blockchain/upload/data/iris.csv'
-# pred = 'Species'
-    model = sys.argv[1]
-    data = sys.argv[2]
-    pred = sys.argv[3]
-    # init(model, data)
-    print(evaluate(pred))
+test_dataset_fp = tf.keras.utils.get_file(fname=os.path.basename(test_data),origin=test_data)
+
+test_dataset = tf.data.experimental.make_csv_dataset(test_dataset_fp,batch_size,column_names=column_names,label_name=label_name,num_epochs=1,shuffle=False)
+
+test_dataset = test_dataset.map(pack_features_vector)
+test_accuracy = tf.keras.metrics.Accuracy()
+
+# model Acurracy
+uploaded_model = load_model(test_model)
+
+for (x, y) in test_dataset:
+  logits = uploaded_model(x)
+  prediction = tf.argmax(logits, axis=1, output_type=tf.int32)
+  test_accuracy(prediction, y)
+
+score = float(format(test_accuracy.result())) * 100
+print(score)

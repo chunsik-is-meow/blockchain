@@ -22,7 +22,7 @@ type AIModelType struct {
 	Language         string   `json:"language"`
 	Price            uint32   `json:"price"`
 	Owner            string   `json:"owner"`
-	Score            uint64   `json:"score"`
+	Score            string   `json:"score"`
 	Downloaded       uint32   `json:"downloaded"`
 	Description      string   `json:"description"`
 	VerificationOrgs []string `json:"verification_orgs"`
@@ -61,7 +61,7 @@ func (a *AIChaincode) InitLedger(ctx contractapi.TransactionContextInterface) er
 	}
 }
 
-func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, uploader string, name string, version string, language string, price uint32, owner string, description string, contents string, timestamp string, score uint64) error {
+func (a *AIChaincode) PutAIModel(ctx contractapi.TransactionContextInterface, uploader string, name string, version string, language string, price uint32, owner string, description string, contents string, timestamp string, score string) error {
 	exists, err := a.aiModelExists(ctx, uploader, name, version)
 	if err != nil {
 		return err
@@ -159,7 +159,7 @@ func (a *AIChaincode) GetAIModelInfo(ctx contractapi.TransactionContextInterface
 		aiModelInfo.Language = "empty"
 		aiModelInfo.Price = 0
 		aiModelInfo.Owner = "empty"
-		aiModelInfo.Score = 0
+		aiModelInfo.Score = "0"
 		aiModelInfo.Downloaded = 0
 		aiModelInfo.Description = "empty"
 		aiModelInfo.VerificationOrgs = []string{""}
@@ -187,7 +187,7 @@ func (a *AIChaincode) GetAIModelInfoWithKey(ctx contractapi.TransactionContextIn
 		aiModelInfo.Language = "empty"
 		aiModelInfo.Price = 0
 		aiModelInfo.Owner = "empty"
-		aiModelInfo.Score = 0
+		aiModelInfo.Score = "0"
 		aiModelInfo.Downloaded = 0
 		aiModelInfo.Description = "empty"
 		aiModelInfo.VerificationOrgs = []string{""}
