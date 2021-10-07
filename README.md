@@ -1,5 +1,9 @@
 # blockchain start
 ./test.sh
+or
+rm -rf ./build
+./blockchain all
+
 # blockchain API test
 ./blockchain.sh test
 

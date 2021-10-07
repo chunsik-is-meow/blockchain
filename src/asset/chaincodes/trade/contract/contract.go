@@ -212,6 +212,7 @@ func (t *TradeChaincode) BuyModel(ctx contractapi.TransactionContextInterface, u
 	// modelKey -> AI_uid_modelName_version(unique)
 	seller := strings.Split(modelKey, "_")[1]
 	verificationOrgs := aiModel.VerificationOrgs
+	fmt.Println(verificationOrgs)
 
 	if price%10 != 0 {
 		return fmt.Errorf("only available in units of 10 meow")
@@ -251,6 +252,14 @@ func (t *TradeChaincode) BuyModel(ctx contractapi.TransactionContextInterface, u
 		}
 		buyAIModel.History = append(buyAIModel.History, verifyRewardHistory)
 	}
+
+	currentMeow.Amount -= price
+
+	currentMeowAsBytes, err := json.Marshal(currentMeow)
+	if err != nil {
+		return fmt.Errorf("failed to json.Marshal(). %v", err)
+	}
+	ctx.GetStub().PutState(makeMeowKey(uid), currentMeowAsBytes)
 
 	buyAIModelAsBytes, err := json.Marshal(buyAIModel)
 	if err != nil {

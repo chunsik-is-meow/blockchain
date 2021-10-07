@@ -394,37 +394,64 @@ function file_download {
     fi
     rm down.txt
 }
+function blockchain_init {
+    date=$(date '+%Y-%m-%d-%H-%M-%S')
+    predict="Species"
+    # price=100
+
+    blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["bank","gydms","30000","'$date'","transfer"]}'
+    # # sleep 2s
+
+    #  # file upload
+    # file_upload data upload/data/iris.csv 0 0
+    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["yohan","iris","1.0","iris_classfication","R.A.Fisher","'$FILECONTENTS'","'$date'"]}'
+    # sleep 3s
+    # file_upload data upload/data/wine.csv 0 0
+    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["heeyeon","wine","1.2","wine_classfication","PARVUS","'$FILECONTENTS'","'$date'"]}'
+    # sleep 3s
+    # file_upload data upload/data/cancer.csv 0 0
+    # blockchain_chaincode_invoke data '{"function":"PutCommonData","Args":["hana","cancer","2.0","cancer_classfication","L.Mangasarian.","'$FILECONTENTS'","'$date'"]}'
+    # sleep 3s
+
+    # file_upload ai-model upload/data/iris.csv upload/ai-model/test_model.h5 $predict
+    # blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["yohan","iris_model","1.0","Python","2000","yohan","test_model_1","'$FILECONTENTS'","'$date'","'$score'"]}'
+    # sleep 3s
+    # file_upload ai-model upload/data/iris.csv upload/ai-model/model_test.h5 $predict
+    # blockchain_chaincode_invoke ai-model '{"function":"PutAIModel","Args":["heeyeon","wine_model","2.0","Python","1000","heeyeon","test_model_2","'$FILECONTENTS'","'$date'","93.5"]}'
+    # sleep 3s
+}
 
 function blockchain_test_trade {
     date=$(date '+%Y-%m-%d-%H-%M-%S')
     price=100
     ################################################### trade chaincode ####################################################
 
-    blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
+    # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
+    # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
-    # NOTE meow is lacking error
-    blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
+    # # NOTE meow is lacking error
+    # blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["hyoeun","yohan","30","'$date'","transfer"]}'
 
-    blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
-    sleep 2s
+    # blockchain_chaincode_invoke trade '{"function":"Transfer","Args":["bank","hyoeun","300000","'$date'","transfer"]}'
+    # sleep 2s
 
-    # NOTE price mismatch error
-    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","A_admin_test_0.0","300","'$date'"]}'
+    # # NOTE price mismatch error
+    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","A_yohan_model8_2.0","100","'$date'"]}'
 
-    # NOTE already buy model
-    blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","A_admin_test_0.0","100","'$date'"]}'
+    # # NOTE already buy model
+    # blockchain_chaincode_invoke trade '{"function":"BuyModel","Args":["hyoeun","A_admin_test_0.0","100","'$date'"]}'
 
-    blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
-    blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
+    # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["hyoeun"]}'
+    # blockchain_chaincode_query trade '{"function":"GetCurrentMeow","Args":["yohan"]}'
 
-    blockchain_chaincode_query trade '{"function":"GetQueryHistory","Args":["hyoeun"]}'
+    # blockchain_chaincode_query trade '{"function":"GetQueryHistory","Args":["hyoeun"]}'
 
     # blockchain_chaincode_invoke trade '{"function":"GetModel","Args":["A_hyoeun_test_model_1.0"]}'
 }
 
 function blockchain_test_data {
     date=$(date '+%Y-%m-%d-%H-%M-%S')
+    predict="Species"
     price=100
    
     ################################################## data chaincode ####################################################
@@ -556,7 +583,7 @@ function blockchain_check {
 
 function main {
     case $1 in
-        all | clean | build | up | down | channel | chaincode | test | upgrade | check | evaluate)
+        all | clean | build | up | down | channel | chaincode | test | upgrade | check | evaluate | init)
             cmd=blockchain_$1
             shift
             $cmd $@

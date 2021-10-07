@@ -35,49 +35,49 @@
     "management.pusan.ac.kr": {
       "mspid": "managementMSP",
       "adminPrivateKey": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/peerOrganizations/management.pusan.ac.kr/users/Admin@management.pusan.ac.kr/msp/keystore/priv_sk"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/peerOrganizations/management.pusan.ac.kr/users/Admin@management.pusan.ac.kr/msp/keystore/priv_sk"
       },
       "peers": [
         "peer0.management.pusan.ac.kr"
       ],
       "signedCert": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/peerOrganizations/management.pusan.ac.kr/users/Admin@management.pusan.ac.kr/msp/signcerts/Admin@management.pusan.ac.kr-cert.pem"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/peerOrganizations/management.pusan.ac.kr/users/Admin@management.pusan.ac.kr/msp/signcerts/Admin@management.pusan.ac.kr-cert.pem"
       }
     },
     "verification-01.pusan.ac.kr": {
       "mspid": "verification-01MSP",
       "adminPrivateKey": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/peerOrganizations/verification-01.pusan.ac.kr/users/Admin@verification-01.pusan.ac.kr/msp/keystore/priv_sk"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/peerOrganizations/verification-01.pusan.ac.kr/users/Admin@verification-01.pusan.ac.kr/msp/keystore/priv_sk"
       },
       "peers": [
         "peer0.verification-01.pusan.ac.kr"
       ],
       "signedCert": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/peerOrganizations/verification-01.pusan.ac.kr/users/Admin@verification-01.pusan.ac.kr/msp/signcerts/Admin@verification-01.pusan.ac.kr-cert.pem"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/peerOrganizations/verification-01.pusan.ac.kr/users/Admin@verification-01.pusan.ac.kr/msp/signcerts/Admin@verification-01.pusan.ac.kr-cert.pem"
       }
     },
     "verification-02.pusan.ac.kr": {
       "mspid": "verification-02MSP",
       "adminPrivateKey": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/peerOrganizations/verification-02.pusan.ac.kr/users/Admin@verification-02.pusan.ac.kr/msp/keystore/priv_sk"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/peerOrganizations/verification-02.pusan.ac.kr/users/Admin@verification-02.pusan.ac.kr/msp/keystore/priv_sk"
       },
       "peers": [
         "peer0.verification-02.pusan.ac.kr"
       ],
       "signedCert": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/peerOrganizations/verification-02.pusan.ac.kr/users/Admin@verification-02.pusan.ac.kr/msp/signcerts/Admin@verification-02.pusan.ac.kr-cert.pem"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/peerOrganizations/verification-02.pusan.ac.kr/users/Admin@verification-02.pusan.ac.kr/msp/signcerts/Admin@verification-02.pusan.ac.kr-cert.pem"
       }
     },
     "trader.pusan.ac.kr": {
       "mspid": "traderMSP",
       "adminPrivateKey": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/peerOrganizations/trader.pusan.ac.kr/users/Admin@trader.pusan.ac.kr/msp/keystore/priv_sk"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/peerOrganizations/trader.pusan.ac.kr/users/Admin@trader.pusan.ac.kr/msp/keystore/priv_sk"
       },
       "peers": [
         "peer0.trader.pusan.ac.kr"
       ],
       "signedCert": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/peerOrganizations/trader.pusan.ac.kr/users/Admin@trader.pusan.ac.kr/msp/signcerts/Admin@trader.pusan.ac.kr-cert.pem"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/peerOrganizations/trader.pusan.ac.kr/users/Admin@trader.pusan.ac.kr/msp/signcerts/Admin@trader.pusan.ac.kr-cert.pem"
       }
     }
   },
@@ -88,7 +88,7 @@
         "ssl-target-name-override": "orderer0.pusan.ac.kr"
       },
       "tlsCACerts": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/ordererOrganizations/pusan.ac.kr/orderers/orderer0.pusan.ac.kr/tls/ca.crt"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/ordererOrganizations/pusan.ac.kr/orderers/orderer0.pusan.ac.kr/tls/ca.crt"
       }
     },
     "orderer1.pusan.ac.kr": {
@@ -97,7 +97,7 @@
         "ssl-target-name-override": "orderer1.pusan.ac.kr"
       },
       "tlsCACerts": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/ordererOrganizations/pusan.ac.kr/orderers/orderer1.pusan.ac.kr/tls/ca.crt"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/ordererOrganizations/pusan.ac.kr/orderers/orderer1.pusan.ac.kr/tls/ca.crt"
       }
     },
     "orderer2.pusan.ac.kr": {
@@ -106,7 +106,7 @@
         "ssl-target-name-override": "orderer2.pusan.ac.kr"
       },
       "tlsCACerts": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/ordererOrganizations/pusan.ac.kr/orderers/orderer2.pusan.ac.kr/tls/ca.crt"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/ordererOrganizations/pusan.ac.kr/orderers/orderer2.pusan.ac.kr/tls/ca.crt"
       }
     }
   },
@@ -117,7 +117,7 @@
         "ssl-target-name-override": "peer0.management.pusan.ac.kr"
       },
       "tlsCACerts": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/peerOrganizations/management.pusan.ac.kr/peers/peer0.management.pusan.ac.kr/tls/ca.crt"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/peerOrganizations/management.pusan.ac.kr/peers/peer0.management.pusan.ac.kr/tls/ca.crt"
       }
     },
     "peer0.verification-01.pusan.ac.kr": {
@@ -126,7 +126,7 @@
         "ssl-target-name-override": "peer0.verification-01.pusan.ac.kr"
       },
       "tlsCACerts": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/peerOrganizations/verification-01.pusan.ac.kr/peers/peer0.verification-01.pusan.ac.kr/tls/ca.crt"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/peerOrganizations/verification-01.pusan.ac.kr/peers/peer0.verification-01.pusan.ac.kr/tls/ca.crt"
       }
     },
     "peer0.verification-02.pusan.ac.kr": {
@@ -135,7 +135,7 @@
         "ssl-target-name-override": "peer0.verification-02.pusan.ac.kr"
       },
       "tlsCACerts": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/peerOrganizations/verification-02.pusan.ac.kr/peers/peer0.verification-02.pusan.ac.kr/tls/ca.crt"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/peerOrganizations/verification-02.pusan.ac.kr/peers/peer0.verification-02.pusan.ac.kr/tls/ca.crt"
       }
     },
     "peer0.trader.pusan.ac.kr": {
@@ -144,7 +144,7 @@
         "ssl-target-name-override": "peer0.trader.pusan.ac.kr"
       },
       "tlsCACerts": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/peerOrganizations/trader.pusan.ac.kr/peers/peer1.trader.pusan.ac.kr/tls/ca.crt"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/peerOrganizations/trader.pusan.ac.kr/peers/peer1.trader.pusan.ac.kr/tls/ca.crt"
       }
     }
   },
@@ -155,7 +155,7 @@
         "verify": false
       },
       "tlsCACerts": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/peerOrganizations/management.pusan.ac.kr/ca/ca.management.pusan.ac.kr-cert.pem"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/peerOrganizations/management.pusan.ac.kr/ca/ca.management.pusan.ac.kr-cert.pem"
       },
       "caName": "ca.management.pusan.ac.kr",
       "registrar": {
@@ -169,7 +169,7 @@
         "verify": false
       },
       "tlsCACerts": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/peerOrganizations/verification-01.pusan.ac.kr/ca/ca.verification-01.pusan.ac.kr-cert.pem"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/peerOrganizations/verification-01.pusan.ac.kr/ca/ca.verification-01.pusan.ac.kr-cert.pem"
       },
       "caName": "ca.verification-01.pusan.ac.kr",
       "registrar": {
@@ -183,7 +183,7 @@
         "verify": false
       },
       "tlsCACerts": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/peerOrganizations/verification-02.pusan.ac.kr/ca/ca.verification-02.pusan.ac.kr-cert.pem"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/peerOrganizations/verification-02.pusan.ac.kr/ca/ca.verification-02.pusan.ac.kr-cert.pem"
       },
       "caName": "ca.verification-02.pusan.ac.kr",
       "registrar": {
@@ -197,7 +197,7 @@
         "verify": false
       },
       "tlsCACerts": {
-        "path": "/mnt/c/Users/hyoeun/Project/src/github.com/chunsik-is-meow/blockchain/crypto-config/peerOrganizations/trader.pusan.ac.kr/ca/ca.trader.pusan.ac.kr-cert.pem"
+        "path": "/opt/dist/src/asset/artifacts/crypto-config/peerOrganizations/trader.pusan.ac.kr/ca/ca.trader.pusan.ac.kr-cert.pem"
       },
       "caName": "ca.trader.pusan.ac.kr",
       "registrar": {
